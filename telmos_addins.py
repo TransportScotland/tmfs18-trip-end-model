@@ -135,7 +135,7 @@ def telmos_addins(delta_root, tmfs_root,
         print("\nChecking against previous files in directory 'Received Data'\n")
         diffs = {k:0 for k in file_names}
         check_path = os.path.join("Received Data", "Output", "37DSL_out")
-        check_files = [os.path.join(check_path, file) for file in file_names]
+        check_files = [os.path.join(check_path, f) for f in file_names]
         for name, p, c in zip(file_names, produced_files, check_files):
             skiprows = 0
             p_total = np.loadtxt(p, skiprows=skiprows, delimiter=",").sum()

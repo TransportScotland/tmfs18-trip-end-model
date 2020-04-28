@@ -58,8 +58,8 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                                     tel_id)
     
     # # # Load base_goods data
-    with open(base_goods_file, "r") as file:
-        data = file.readlines()
+    with open(base_goods_file, "r") as f:
+        data = f.readlines()
     # Discard header
     data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
                                       line.split()[0] == "2")],dtype="float64")
@@ -85,8 +85,8 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # # # # # # # # # # # # # # # 
     
     # Repeat for tel data
-    with open(tel_goods_file, "r") as file:
-        data = file.readlines()
+    with open(tel_goods_file, "r") as f:
+        data = f.readlines()
     # Discard header
     data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
                                       line.split()[0] == "2")], dtype="float64")

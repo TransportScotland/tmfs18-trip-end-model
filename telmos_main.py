@@ -44,9 +44,9 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         names = []
         for period, purpose, mode in product(periods, purposes, modes):
             file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, suffix)
-            file = os.path.join(factors_base, file_name)
+            factor_file = os.path.join(factors_base, file_name)
             try:
-                data.append(np.loadtxt(file))
+                data.append(np.loadtxt(factor_file))
                 names.append(file_name)
             except FileNotFoundError as f:
                 # If any file can not be found - abort
@@ -153,7 +153,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         sr_prod_array = np.zeros((32, count_tmfs, 11))
 
         
-    with open(check_file, "w", newline="") as file:
+    with open(check_file, "w", newline="") as check:
         trr = 0
         for k in range(sr_prod_array.shape[0]):
             for j in range(sr_prod_array.shape[2]):
@@ -163,8 +163,8 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                     trr += 1
                     if trr == 8:
                         trr = 0
-                    file.write(str(sr_prod_array[k,i,j]))
-                    file.write("\n")
+                    check.write(str(sr_prod_array[k,i,j]))
+                    check.write("\n")
     
 
     print("SR Product array %s" % str(sr_prod_array.shape))
@@ -409,17 +409,15 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Check against supplied files
     if debug is True:
         print("\nChecking against previous files in directory 'Received Data'\n")
-        files = ["Attraction", "Production"] + [file for file in tod_files] + [
-                file for file in cte_files]
+        files = ["Attraction", "Production"] + tod_files + cte_files
         diffs = {k:0 for k in files}
         produced_path = os.path.join(tmfs_root, "Runs", tel_year, 
                                         "Demand", tel_id)
         produced_files = [attr_file, prod_factor_file] + [os.path.join(produced_path, 
-                         file) for file in tod_files] + [os.path.join(produced_path,
-                             file) for file in cte_files]
+                         t) for t in tod_files] + [os.path.join(produced_path,
+                             c) for c in cte_files]
         check_path = os.path.join("Received Data", "Output", "37DSL_out")
-        check_files = ["tav_37_DSL.csv", "tmfs37_DSL.csv"] + [
-                file for file in tod_files] + [file for file in cte_files]
+        check_files = ["tav_37_DSL.csv", "tmfs37_DSL.csv"] + tod_files + cte_files
         check_files = [os.path.join(check_path, x) for x in check_files]
         for name, p, c in zip(files, produced_files, check_files):
             if name == "Attraction" or name == "Production":
