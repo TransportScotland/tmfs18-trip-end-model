@@ -14,15 +14,12 @@ import pandas as pd
 
 def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
-                do_output=False, debug=True, print_func=print):
-    
-    print = print_func
-    
+                do_output=False, debug=True, log_func=print):
     # Set this to true if run is rebasing from TMfS07 to TMfS12 or 
     # TMfS12 to TMfs14 => it resets the GV growth to 1.00
     rebasing_run = is_rebasing_run
 
-    print("Processing Goods...")
+    log_func("Processing Goods...")
     
     # # # Inputs # # #
     # sr1
@@ -64,7 +61,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
                                       line.split()[0] == "2")],dtype="float64")
 
-    print("Base Goods shape = %s" % str(data.shape))
+    log_func("Base Goods shape = %s" % str(data.shape))
         
     hgv_base_array = pd.DataFrame(data[data[:,0]==1][:,1:])
     lgv_base_array = pd.DataFrame(data[data[:,0]==2][:,1:])
@@ -74,8 +71,8 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
             base_hgv_file, index=False, header=False)
         pd.concat((lgv_base_array.loc[:,:1].astype("int16"),lgv_base_array.loc[:,2]),axis=1).to_csv(
             base_lgv_file, index=False, header=False)
-        print("Base HGV Saved to %s" % str(base_hgv_file))
-        print("Base LGV Saved to %s" % str(base_lgv_file))
+        log_func("Base HGV Saved to %s" % str(base_hgv_file))
+        log_func("Base LGV Saved to %s" % str(base_lgv_file))
         
     hgv_base_array = np.array(hgv_base_array.set_index([0,1]).unstack(-1))
     lgv_base_array = np.array(lgv_base_array.set_index([0,1]).unstack(-1))
@@ -91,7 +88,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
                                       line.split()[0] == "2")], dtype="float64")
         
-    print("TEL Goods shape = %s" % str(data.shape))
+    log_func("TEL Goods shape = %s" % str(data.shape))
             
     hgv_tel_array = pd.DataFrame(data[data[:,0]==1][:,1:])
     lgv_tel_array = pd.DataFrame(data[data[:,0]==2][:,1:])
@@ -102,8 +99,8 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         pd.concat((lgv_tel_array.loc[:,:1].astype("int16"),
                    lgv_tel_array.loc[:,2]),axis=1).to_csv(
             tel_lgv_file, index=False, header=False)
-        print("TEL HGV Saved to %s" % str(tel_hgv_file))
-        print("TEL LGV Saved to %s" % str(tel_lgv_file))
+        log_func("TEL HGV Saved to %s" % str(tel_hgv_file))
+        log_func("TEL LGV Saved to %s" % str(tel_lgv_file))
     
     hgv_tel_array = np.array(hgv_tel_array.set_index([0,1]).unstack(-1))
     lgv_tel_array = np.array(lgv_tel_array.set_index([0,1]).unstack(-1))
@@ -111,7 +108,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     hgv_count = hgv_tel_array.shape[0]
     hgv_count = lgv_tel_array.shape[0] ## This is an error but does not matter
 
-    print("HGV Count = %s" % str(hgv_count))
+    log_func("HGV Count = %s" % str(hgv_count))
     
     # # # # # # # # # # # # # # # 
     
@@ -193,23 +190,23 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
             df.loc[:,:"level_1"] = df.loc[:,:"level_1"] + 1
             df.to_csv(os.path.join(tel_filebase, filename), index=False, 
                       header=False, float_format="%.3f")
-            print("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
+            log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
             
         # Create Trip End Files
         te_array = np.stack((np.arange(new_forecast_array[f_key].shape[0]) + 1,
                              new_forecast_array[f_key].sum(axis=1),
                              new_forecast_array[f_key].sum(axis=0)), axis=1)
         if te_array.nbytes < 500:
-            print("Trip End Array is incomplete")
+            log_func("Trip End Array is incomplete")
         if do_output:
             np.savetxt(os.path.join(tel_filebase, filename.replace(".DAT","TE.DAT")),
                        te_array, fmt=["%d","%.3f","%.3f"], delimiter=",")
-            print("Goods TE saved to %s" % str(os.path.join(tel_filebase,
+            log_func("Goods TE saved to %s" % str(os.path.join(tel_filebase,
                                                      filename.replace(".DAT","TE.DAT"))))
             
     # Check against supplied files
     if debug is True:
-        print("\nChecking against previous files in directory 'Received Data'\n")
+        log_func("\nChecking against previous files in directory 'Received Data'\n")
         files = ["Base HGV", "Base LGV", "TEL HGV", "TEL LGV"] + [f for f in 
                 filenames] + [f.replace(".DAT", "TE.DAT") for f in filenames]
         diffs = {k:0 for k in files}
@@ -243,7 +240,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Check array sizes are > 250KBytes
     for k, array in new_forecast_array.items():
         if array.nbytes < 250000:
-            print("Array is incomplete %s" % k)
+            log_func("Array is incomplete %s" % k)
                     
         
         

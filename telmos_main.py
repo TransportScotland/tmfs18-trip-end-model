@@ -18,13 +18,11 @@ from telmos_addins import telmos_addins
 
 def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
-                do_output=False, debug=True, print_func=print,
+                do_output=False, debug=True, log_func=print,
                 just_pivots=False):
     '''
     This is a conversion of the TMfS14 Visual Basic application 
     '''
-    
-    print = print_func
     
     rebasing_run = is_rebasing_run # May need to be Variable
     
@@ -50,7 +48,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 names.append(file_name)
             except FileNotFoundError as f:
                 # If any file can not be found - abort
-                print("Could not find file %s\nAborting" % f)
+                log_func("Could not find file %s\nAborting" % f)
                 return
         sr_array.append(data)
         all_names.append(names)
@@ -61,9 +59,9 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     student_factors = np.loadtxt(os.path.join(factors_base, filenames[0]))
     attraction_factors = np.loadtxt(os.path.join(factors_base, filenames[1]))
     
-    print("Loaded SR Factors with shape: %s" % str(sr_array.shape)) # old shape was (24, 6, 7, 10)
-    print("Loaded Student Factors with shape: %s" % str(student_factors.shape))
-    print("Loaded Attraction Factors with shape: %s" % str(attraction_factors.shape))
+    log_func("Loaded SR Factors with shape: %s" % str(sr_array.shape)) # old shape was (24, 6, 7, 10)
+    log_func("Loaded Student Factors with shape: %s" % str(student_factors.shape))
+    log_func("Loaded Attraction Factors with shape: %s" % str(attraction_factors.shape))
     
     # Read in Non-Factor files
     
@@ -91,9 +89,9 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     tmfs_array[:,4], tmfs_array[:,5] = tmfs_array[:,5], tmfs_array[:,4].copy()
     count_tmfs = tmfs_array.shape[0]
     
-    print("TAV Count: %d" % count_tav)
-    print("I Count: %d" % count_i)
-    print("TMFS Count: %d" % count_tmfs)
+    log_func("TAV Count: %d" % count_tav)
+    log_func("I Count: %d" % count_i)
+    log_func("TMFS Count: %d" % count_tmfs)
 
     # # # # # # # # # # # # # # # #
     # Put income segregation here #
@@ -107,9 +105,9 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     tmfs_adj_array[:,7] = tmfs_adj_array[:,7] * (1 - student_factors[0])
     tmfs_adj_array[:,8] = tmfs_adj_array[:,8] * (1 - student_factors[1])
 
-    print("TAV Base Array shape = %s" % str(tav_base_array.shape))
-    print("TMFS Array shape = %s" % str(tmfs_array.shape))
-    print("TMFS Adj Array shape = %s" % str(tmfs_adj_array.shape))
+    log_func("TAV Base Array shape = %s" % str(tav_base_array.shape))
+    log_func("TMFS Array shape = %s" % str(tmfs_array.shape))
+    log_func("TMFS Adj Array shape = %s" % str(tmfs_adj_array.shape))
 
     
     # Attraction Factors
@@ -128,7 +126,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     if do_output:
         np.savetxt(attr_file, attr_factors_array.round(3), delimiter=",",
                 header="HW,HE,HO,HS", fmt="%.3f", comments="")
-        print("Attraction Factors saved to %s" % str(attr_file))
+        log_func("Attraction Factors saved to %s" % str(attr_file))
 
     # # # # # # # # # # # #
     # Attraction Growth Factors
@@ -144,7 +142,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                                    usecols=2, dtype="int8")
     # 
     area_corres_array = np.repeat(area_corres_array, 8)
-    print("Area Correspondence shape = %s" % str(area_corres_array.shape))
+    log_func("Area Correspondence shape = %s" % str(area_corres_array.shape))
     
     check_file = os.path.join(tmfs_root, "Runs", tel_year,
                               "Demand", tel_id, "check2.csv")
@@ -167,7 +165,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                     check.write("\n")
     
 
-    print("SR Product array %s" % str(sr_prod_array.shape))
+    log_func("SR Product array %s" % str(sr_prod_array.shape))
     prod_factor_array = np.zeros_like(tmfs_base_array)
     
     # Just Pivots is a debug option to output an extended version of the pivoting files
@@ -242,20 +240,20 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                        "SOC C0,SOC C11,SOC C12,SOC C2,SOP C0,SOP C11,SOP C12,SOP C2")
             np.savetxt(prod_factor_file, prod_factor_array.round(3), delimiter=",",
                        header=file_header, fmt="%.3f", comments="")
-            print("Completed calculating pivoting tables")
-            print("Finished")
+            log_func("Completed calculating pivoting tables")
+            log_func("Finished")
             return
 
         np.savetxt(prod_factor_file, prod_factor_array.round(3), delimiter=",",
                     header=file_header, fmt="%.3f", comments="")
-        print("Production Factors saved to %s" % str(prod_factor_file))
+        log_func("Production Factors saved to %s" % str(prod_factor_file))
         
     
     ## # # # # # # # # #
     # Production Growth Factors
     prod_growth_array = prod_factor_array / tmfs_base_array
     prod_growth_array[prod_growth_array == np.inf] = 1.0
-    print("Production Growth Array shape = %s" % str(prod_growth_array.shape))
+    log_func("Production Growth Array shape = %s" % str(prod_growth_array.shape))
 
     prefixes = ["AM","IP"]
     types = ["HWZ_A1", "HOZ_A1_ALL", "HEZ_A1_ALL", "HSZ_A1"]
@@ -283,8 +281,8 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                                    delimiter=","))
     tod_data = np.asarray(tod_data)
     cte_data = np.asarray(cte_data)
-    print("TOD Data Shape = %s" % str(tod_data.shape))
-    print("CTE Data Shape = %s" % str(cte_data.shape))
+    log_func("TOD Data Shape = %s" % str(tod_data.shape))
+    log_func("CTE Data Shape = %s" % str(cte_data.shape))
 
     airport_growth = np.ones(count_tav,dtype="float")
     if rebasing_run is False:
@@ -350,7 +348,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     sw_array[7,:,5] *= (sw_prod["14"] / sw_attr["14"])
     sw_array[8,:,5] *= (sw_prod["17"] / sw_attr["17"])
 
-    print("SW Array shape = %s" % str(sw_array.shape))
+    log_func("SW Array shape = %s" % str(sw_array.shape))
 
     # Print the TOD files - index +1: array(round(3))
     # All the zones are internal, so are labelled continuously - 1->787 as of tmfs18
@@ -360,12 +358,12 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
             np.savetxt(path, np.concatenate(
                     (np.arange(sw_array[i].shape[0])[:,None]+1, sw_array[i][:,1:]),axis=1),
                         delimiter=", ", fmt=["%d"]+["%.3f" for x in range(sw_array[i].shape[1]-1)])
-            print("TOD File saved to %s" % str(path))
+            log_func("TOD File saved to %s" % str(path))
 
     sw_cte_array = np.zeros_like(cte_data, dtype="float")
     prod_col_idxs = np.array([1,2,3,5,6,7,4])
     attr_growth_idxs = [None, 2, 1, None, None, 2, 1, None, None]
-    print("SW CTE Array shape = %s" % str(sw_cte_array.shape))
+    log_func("SW CTE Array shape = %s" % str(sw_cte_array.shape))
     for j in range(sw_cte_array.shape[0]):
         if j < 8:
             sw_cte_array[j,:,1:8] = (cte_data[j,:,1:8] * 
@@ -395,20 +393,20 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
             np.savetxt(path, np.concatenate(
                     (np.arange(sw_cte_array[i].shape[0])[:,None]+1, sw_cte_array[i][:,1:]),axis=1),
                         delimiter=", ", fmt=["%d"]+["%.5f" for x in range(sw_cte_array[i].shape[1]-1)])
-            print("CTE File saved to %s" % str(path))
+            log_func("CTE File saved to %s" % str(path))
     
     # Check that each array CTE and TOD is > 15kBytes
     for i,test_array in enumerate(sw_array):
         if test_array.nbytes < 15000:
-            print("TOD Array is incomplete: %d" % i)
+            log_func("TOD Array is incomplete: %d" % i)
     for i,test_array in enumerate(sw_cte_array):
         if test_array.nbytes < 15000:
-            print("CTE Array is incomplete: %d" % i)
+            log_func("CTE Array is incomplete: %d" % i)
             
             
     # Check against supplied files
     if debug is True:
-        print("\nChecking against previous files in directory 'Received Data'\n")
+        log_func("\nChecking against previous files in directory 'Received Data'\n")
         files = ["Attraction", "Production"] + tod_files + cte_files
         diffs = {k:0 for k in files}
         produced_path = os.path.join(tmfs_root, "Runs", tel_year, 
