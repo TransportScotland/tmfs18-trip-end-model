@@ -6,6 +6,7 @@
 Conversion of TELMOS2_v2.2 vb scripts
 """
 
+from itertools import product
 import os
 
 import numpy as np
@@ -41,19 +42,16 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     for suffix in suffixes:
         data = []
         names = []
-        for period in periods:
-            for purpose in purposes:
-                for mode in modes:
-                    file_name = "%s_%s_%s_%s.txt" % (
-                            purpose, mode, period, suffix)
-                    file = os.path.join(factors_base, file_name)
-                    try:
-                        data.append(np.loadtxt(file))
-                        names.append(file_name)
-                    except FileNotFoundError as f:
-                        # If any file can not be found - abort
-                        print("Could not find file %s\nAborting" % f)
-                        return
+        for period, purpose, mode in product(periods, purposes, modes):
+            file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, suffix)
+            file = os.path.join(factors_base, file_name)
+            try:
+                data.append(np.loadtxt(file))
+                names.append(file_name)
+            except FileNotFoundError as f:
+                # If any file can not be found - abort
+                print("Could not find file %s\nAborting" % f)
+                return
         sr_array.append(data)
         all_names.append(names)
     sr_array = np.asarray(sr_array)
