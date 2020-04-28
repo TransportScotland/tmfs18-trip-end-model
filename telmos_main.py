@@ -7,14 +7,13 @@ Conversion of TELMOS2_v2.2 vb scripts
 """
 
 import os
+
 import numpy as np
 import pandas as pd
-    
-try:
-    from telmos_goods import telmos_goods
-    from telmos_addins import telmos_addins
-except ImportError:
-    print("Could not import custom functions")
+
+from telmos_goods import telmos_goods
+from telmos_addins import telmos_addins
+
 
 def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,

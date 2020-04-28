@@ -7,12 +7,11 @@ Conversion of TELMOS2_v2.2 vb scripts
 """
 
 import os
+
 import numpy as np
 import pandas as pd
-    
-#import numpy as np
-#import pandas as pd
-#    
+
+
 def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
                 do_output=False, debug=True, print_func=print):

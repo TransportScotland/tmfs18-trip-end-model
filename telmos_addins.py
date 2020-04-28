@@ -7,13 +7,13 @@ Conversion of TELMOS2_v2.2 vb scripts
 """
 
 import os
+
 import numpy as np
 import pandas as pd
+
 from data_functions import odfile_to_matrix, matrix_to_odfile
-    
-#import numpy as np
-#import pandas as pd
-    
+
+
 def telmos_addins(delta_root, tmfs_root, 
                 tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, do_output=False,
