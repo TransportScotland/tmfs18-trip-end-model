@@ -15,23 +15,21 @@ def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year,
          base_id, base_scenario, rebasing_run, do_output, do_debug, 
          thread_queue=None, print_func=print, just_pivots=False):
     
-    if print_func is not None:
-        print = print_func
-    else:
+    if print_func is None:
         print_func = print
     
     main_diffs = telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                 base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                do_output=do_output, debug=do_debug, print_func=print_func,
+                do_output=do_output, debug=do_debug, log_func=print_func,
                 just_pivots=just_pivots)
     if just_pivots is False:
         goods_diffs = telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                     base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                    do_output=do_output, debug=do_debug, print_func=print_func)
+                    do_output=do_output, debug=do_debug, log_func=print_func)
         
         addin_diffs = telmos_addins(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                     base_year, base_id, base_scenario, 
-                    do_output=do_output, debug=do_debug, print_func=print_func)
+                    do_output=do_output, debug=do_debug, log_func=print_func)
     
     if do_debug is True:
         print("Matrix Differences:")

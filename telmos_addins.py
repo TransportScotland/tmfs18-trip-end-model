@@ -7,21 +7,18 @@ Conversion of TELMOS2_v2.2 vb scripts
 """
 
 import os
+
 import numpy as np
 import pandas as pd
+
 from data_functions import odfile_to_matrix, matrix_to_odfile
-    
-#import numpy as np
-#import pandas as pd
-    
+
+
 def telmos_addins(delta_root, tmfs_root, 
                 tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, do_output=False,
-                debug=True, print_func=print):
-    
-    print = print_func
-    
-    print("Processing Addins...")
+                debug=True, log_func=print):
+    log_func("Processing Addins...")
     
     #low_zones = 783 ;; This is now increased to 787 to represent the internal 
     #                ;; Cannot be done without hardcoding low_zones number if separate
@@ -68,7 +65,7 @@ def telmos_addins(delta_root, tmfs_root,
                 out_file = os.path.join(
                         tmfs_root, "Runs", tel_year, "Demand", tel_id, filename)
                 matrix_to_odfile(new_addin_array[f_key].round(3), out_file)
-                print("Saved matrix to %s" % str(out_file))
+                log_func("Saved matrix to %s" % str(out_file))
                 produced_files.append(out_file)
                 file_names.append(filename)
             
@@ -89,7 +86,7 @@ def telmos_addins(delta_root, tmfs_root,
                                                "Demand", tel_id, filename)
                 matrix_to_odfile([x.round(3) for x in new_addin_array[f_key]], 
                                   out_file, num_columns=3)
-                print("Saved matrix as %s" % str(out_file))
+                log_func("Saved matrix as %s" % str(out_file))
                 produced_files.append(out_file)
                 file_names.append(filename)
                 
@@ -112,30 +109,30 @@ def telmos_addins(delta_root, tmfs_root,
         # Check File sizes
         try:
             if new_addin_array[f_key].nbytes < 250000:
-                print("Addin array is incomplete: %s" % f_key)
+                log_func("Addin array is incomplete: %s" % f_key)
             
         except AttributeError:
             for m in new_addin_array[f_key]:
                 if m.nbytes < 250000:
-                    print("Addin array is incomplete: %s" % f_key)
+                    log_func("Addin array is incomplete: %s" % f_key)
         if te_array.nbytes < 500:
-            print("Addin TE array is incomplete: %s" % f_key)
+            log_func("Addin TE array is incomplete: %s" % f_key)
             
         if do_output:
             out_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand",
                                     tel_id, filename.replace(".DAT", "TE.DAT"))
             format_string = ["%d"] + ["%.3f" for x in range(te_array.shape[1]-1)]
             np.savetxt(out_file, te_array, delimiter=",", fmt=format_string)
-            print("Saved Trip Ends to %s" % str(out_file))
+            log_func("Saved Trip Ends to %s" % str(out_file))
             produced_files.append(out_file)
             file_names.append(filename.replace(".DAT", "TE.DAT"))
             
     # Check against supplied files
     if debug is True:
-        print("\nChecking against previous files in directory 'Received Data'\n")
+        log_func("\nChecking against previous files in directory 'Received Data'\n")
         diffs = {k:0 for k in file_names}
         check_path = os.path.join("Received Data", "Output", "37DSL_out")
-        check_files = [os.path.join(check_path, file) for file in file_names]
+        check_files = [os.path.join(check_path, f) for f in file_names]
         for name, p, c in zip(file_names, produced_files, check_files):
             skiprows = 0
             p_total = np.loadtxt(p, skiprows=skiprows, delimiter=",").sum()
