@@ -7,6 +7,8 @@ Conversion of TELMOS2_v2.2 vb scripts
 The telmos_xxx files all replicate the old TMfS14 VB functions of the same names
 """
 
+import sys
+
 from telmos_main import telmos_main
 from telmos_goods import telmos_goods
 from telmos_addins import telmos_addins
@@ -17,19 +19,22 @@ def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year,
     
     if print_func is None:
         print_func = print
-    
-    main_diffs = telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
-                base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                do_output=do_output, debug=do_debug, log_func=print_func,
-                just_pivots=just_pivots)
-    if just_pivots is False:
-        goods_diffs = telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
+    try:
+        main_diffs = telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                     base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                    do_output=do_output, debug=do_debug, log_func=print_func)
-        
-        addin_diffs = telmos_addins(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
-                    base_year, base_id, base_scenario, 
-                    do_output=do_output, debug=do_debug, log_func=print_func)
+                    do_output=do_output, debug=do_debug, log_func=print_func,
+                    just_pivots=just_pivots)
+        if just_pivots is False:
+            goods_diffs = telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
+                        base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
+                        do_output=do_output, debug=do_debug, log_func=print_func)
+            
+            addin_diffs = telmos_addins(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
+                        base_year, base_id, base_scenario, 
+                        do_output=do_output, debug=do_debug, log_func=print_func)
+    except Exception:
+        thread_queue.put(sys.exc_info())
+        return
     
     if do_debug is True:
         print("Matrix Differences:")
@@ -41,7 +46,7 @@ def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year,
         print("Finished")
         thread_queue.put(diffs)
     else:
-        print("Finished")
+        print_func("Finished")
         thread_queue.put(None)
     
 if __name__ == "__main__":

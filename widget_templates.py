@@ -160,8 +160,6 @@ class LabelledEntry:
         if working_dir == "":
             return
         self.variable.set(working_dir)
-        self.dir.set(working_dir)
-        self.callback()
         
     def get_save_file_name(self, extension=".xlsx"):
         try:

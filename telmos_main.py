@@ -15,6 +15,29 @@ import pandas as pd
 from telmos_goods import telmos_goods
 from telmos_addins import telmos_addins
 
+def read_trip_rates(factors_dir, just_pivots):
+    '''
+    Loads the production trip rate files into
+    '''
+    purposes = ["HBW", "HBO", "HBE", "HBS"]
+    modes = ["Car", "PT"]
+    periods = ["AM", "IP", "PM"]
+    if just_pivots is True:
+        periods.append("OP")
+    suffixes = range(3, 9)
+    
+    sr_array = []
+    for suffix in suffixes:
+        data = []
+        names = []
+        for period, purpose, mode in product(periods, purposes, modes):
+            file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, suffix)
+            factor_file = os.path.join(factors_dir, file_name)
+            data.append(np.loadtxt(factor_file))
+            names.append(file_name)
+        sr_array.append(data)
+    return np.asarray(sr_array)
+
 
 def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
@@ -24,40 +47,16 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     This is a conversion of the TMfS14 Visual Basic application 
     '''
     
-    rebasing_run = is_rebasing_run # May need to be Variable
     
     # Read in the trip rate matrices into multi-dim array
     factors_base = os.path.join(tmfs_root, "Factors")
-    purposes = ["HBW", "HBO", "HBE", "HBS"]
-    modes = ["Car", "PT"]
-    periods = ["AM", "IP", "PM"]
-    if just_pivots is True:
-        periods.append("OP")
-    suffixes = range(3, 9)
-    
-    sr_array = []
-    all_names = []
-    for suffix in suffixes:
-        data = []
-        names = []
-        for period, purpose, mode in product(periods, purposes, modes):
-            file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, suffix)
-            factor_file = os.path.join(factors_base, file_name)
-            try:
-                data.append(np.loadtxt(factor_file))
-                names.append(file_name)
-            except FileNotFoundError as f:
-                # If any file can not be found - abort
-                log_func("Could not find file %s\nAborting" % f)
-                return
-        sr_array.append(data)
-        all_names.append(names)
-    sr_array = np.asarray(sr_array)
+    sr_array = read_trip_rates(factors_base, just_pivots)
     
     # Load in the student factors and attraction factors separately
-    filenames = ["Student Factors.txt", "Attraction Factors.txt"]
-    student_factors = np.loadtxt(os.path.join(factors_base, filenames[0]))
-    attraction_factors = np.loadtxt(os.path.join(factors_base, filenames[1]))
+    attraction_file = "Attraction Factors.txt"
+    attraction_factors = np.loadtxt(os.path.join(factors_base, attraction_file))
+        
+    student_factors = np.array([0.2794, 0.2453])
     
     log_func("Loaded SR Factors with shape: %s" % str(sr_array.shape)) # old shape was (24, 6, 7, 10)
     log_func("Loaded Student Factors with shape: %s" % str(student_factors.shape))
@@ -172,21 +171,12 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Originally outputs just 64 columns - 2 periods * 4 Purposes * 2 Modes * 4 Household types
     column_width = 2 * 4 * 2 * 4
     if just_pivots is True:
-        # If just calculating the pivoting tables output all the possible time peeriods
+        # If just calculating the pivoting tables output all the possible time periods
         # - 4 Periods * 4 Purposes * 2 Modes * 4 Household types
         column_width = 4 * 4 * 2 * 4
         prod_factor_array = np.zeros(
                 (tmfs_base_array.shape[0], tmfs_base_array.shape[1] + 
                  int(column_width / 2)))
-        
-    # FOR OUTPUTTING WITH DIFFERENT NUMBER OF ZONES
-    """if just_pivots is True:
-        # If just calculating the pivoting tables output all the possible time peeriods
-        # - 4 Periods * 4 Purposes * 2 Modes * 4 Household types
-        column_width = 4 * 4 * 2 * 4
-        prod_factor_array = np.zeros(
-                (tmfs_base_array.shape[0]+4, tmfs_base_array.shape[1] + 
-                 int(column_width / 2)))"""
         
     # aggregates the household types into C0, C11, C12, C2
     for i in range(count_tav):
@@ -285,7 +275,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     log_func("CTE Data Shape = %s" % str(cte_data.shape))
 
     airport_growth = np.ones(count_tav,dtype="float")
-    if rebasing_run is False:
+    if is_rebasing_run is False:
         # Airport indices are as follows (zones are indices + 1):
         #   708 = Edinburgh Airport
         #   709 = Prestwick Airport
