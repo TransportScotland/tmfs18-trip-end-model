@@ -8,46 +8,47 @@ The telmos_xxx files all replicate the old TMfS14 VB functions of the same names
 """
 
 import sys
+import os
 
 from telmos_main import telmos_main
 from telmos_goods import telmos_goods
 from telmos_addins import telmos_addins
 
 def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year, 
-         base_id, base_scenario, rebasing_run, do_output, do_debug, 
+         base_id, base_scenario, rebasing_run, 
          thread_queue=None, print_func=print, just_pivots=False):
     
     if print_func is None:
         print_func = print
+        
     try:
-        main_diffs = telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
+        # Create a new directory for the output if it does not already exist
+        output_dir = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id)
+        if os.path.exists(output_dir) is False:
+            os.mkdir(output_dir)
+        
+        telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                     base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                    do_output=do_output, debug=do_debug, log_func=print_func,
-                    just_pivots=just_pivots)
+                    log_func=print_func, just_pivots=just_pivots)
         if just_pivots is False:
-            goods_diffs = telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
+            telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                         base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                        do_output=do_output, debug=do_debug, log_func=print_func)
+                        log_func=print_func)
             
-            addin_diffs = telmos_addins(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
-                        base_year, base_id, base_scenario, 
-                        do_output=do_output, debug=do_debug, log_func=print_func)
+            telmos_addins(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
+                        base_year, base_id, base_scenario, log_func=print_func)
     except Exception:
-        thread_queue.put(sys.exc_info())
-        return
-    
-    if do_debug is True:
-        print("Matrix Differences:")
-        diffs = (main_diffs, goods_diffs, addin_diffs)
-        for d in diffs:
-            for k, v in d.items():
-                print("Matrix %s difference = %f%%" % (k, 100*v))
-    
-        print("Finished")
-        thread_queue.put(diffs)
+        if thread_queue is not None:
+            thread_queue.put(sys.exc_info())
+            return
+        else:
+            # Not running from GUI so raise the exception as normal
+            raise
     else:
+        if thread_queue is not None:
+            thread_queue.put(None)
         print_func("Finished")
-        thread_queue.put(None)
+        
     
 if __name__ == "__main__":
     delta_root = "Data/Structure/delta_root"
@@ -60,5 +61,5 @@ if __name__ == "__main__":
     base_scenario = "AE"
     diffs = telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
          base_year, base_id, base_scenario,
-         rebasing_run=False, do_output=True, do_debug=False, just_pivots=False)
+         rebasing_run=False, just_pivots=False)
     
