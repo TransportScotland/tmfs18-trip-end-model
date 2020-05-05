@@ -11,13 +11,34 @@ import os
 import numpy as np
 import pandas as pd
 
+def load_goods_data(goods_file, hgv_output, lgv_output):
+    '''
+    Loading function for TELMoS goods files
+    Splits the data into LGV and HGV parts
+    '''
+    with open(goods_file, "r") as f:
+        data = f.readlines()
+    # Discard header
+    data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
+                                      line.split()[0] == "2")],dtype="float64")
+        
+    hgv_array = pd.DataFrame(data[data[:,0]==1][:,1:])
+    lgv_array = pd.DataFrame(data[data[:,0]==2][:,1:])
+    #Print to separate files
+    pd.concat((hgv_array.loc[:,:1].astype("int16"),hgv_array.loc[:,2]),axis=1).to_csv(
+        hgv_output, index=False, header=False)
+    pd.concat((lgv_array.loc[:,:1].astype("int16"),lgv_array.loc[:,2]),axis=1).to_csv(
+        lgv_output, index=False, header=False)
+    
+    hgv_array = np.array(hgv_array.set_index([0,1]).unstack(-1))
+    lgv_array = np.array(lgv_array.set_index([0,1]).unstack(-1))
+    return (hgv_array, lgv_array)
 
 def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
                 do_output=False, debug=True, log_func=print):
     # Set this to true if run is rebasing from TMfS07 to TMfS12 or 
     # TMfS12 to TMfs14 => it resets the GV growth to 1.00
-    rebasing_run = is_rebasing_run
 
     log_func("Processing Goods...")
     
@@ -55,58 +76,16 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                                     tel_id)
     
     # # # Load base_goods data
-    with open(base_goods_file, "r") as f:
-        data = f.readlines()
-    # Discard header
-    data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
-                                      line.split()[0] == "2")],dtype="float64")
-
-    log_func("Base Goods shape = %s" % str(data.shape))
-        
-    hgv_base_array = pd.DataFrame(data[data[:,0]==1][:,1:])
-    lgv_base_array = pd.DataFrame(data[data[:,0]==2][:,1:])
-    #Print to separate files
-    if do_output:
-        pd.concat((hgv_base_array.loc[:,:1].astype("int16"),hgv_base_array.loc[:,2]),axis=1).to_csv(
-            base_hgv_file, index=False, header=False)
-        pd.concat((lgv_base_array.loc[:,:1].astype("int16"),lgv_base_array.loc[:,2]),axis=1).to_csv(
-            base_lgv_file, index=False, header=False)
-        log_func("Base HGV Saved to %s" % str(base_hgv_file))
-        log_func("Base LGV Saved to %s" % str(base_lgv_file))
-        
-    hgv_base_array = np.array(hgv_base_array.set_index([0,1]).unstack(-1))
-    lgv_base_array = np.array(lgv_base_array.set_index([0,1]).unstack(-1))
+    hgv_base_array, lgv_base_array = load_goods_data(base_goods_file, 
+                                                     base_hgv_file, base_lgv_file)
     
     hgv_count = hgv_base_array.shape[0]
     lgv_count = lgv_base_array.shape[0] ## This was an error in TMfS14 - but it is not used
     # # # # # # # # # # # # # # # 
     
     # Repeat for tel data
-    with open(tel_goods_file, "r") as f:
-        data = f.readlines()
-    # Discard header
-    data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
-                                      line.split()[0] == "2")], dtype="float64")
-        
-    log_func("TEL Goods shape = %s" % str(data.shape))
-            
-    hgv_tel_array = pd.DataFrame(data[data[:,0]==1][:,1:])
-    lgv_tel_array = pd.DataFrame(data[data[:,0]==2][:,1:])
-    if do_output:
-        pd.concat((hgv_tel_array.loc[:,:1].astype("int16"),
-                   hgv_tel_array.loc[:,2]),axis=1).to_csv(
-            tel_hgv_file, index=False, header=False)
-        pd.concat((lgv_tel_array.loc[:,:1].astype("int16"),
-                   lgv_tel_array.loc[:,2]),axis=1).to_csv(
-            tel_lgv_file, index=False, header=False)
-        log_func("TEL HGV Saved to %s" % str(tel_hgv_file))
-        log_func("TEL LGV Saved to %s" % str(tel_lgv_file))
-    
-    hgv_tel_array = np.array(hgv_tel_array.set_index([0,1]).unstack(-1))
-    lgv_tel_array = np.array(lgv_tel_array.set_index([0,1]).unstack(-1))
-    
-    hgv_count = hgv_tel_array.shape[0]
-    hgv_count = lgv_tel_array.shape[0] ## This is an error but does not matter
+    hgv_tel_array, lgv_tel_array = load_goods_data(tel_goods_file, 
+                                                   tel_hgv_file, tel_lgv_file)
 
     log_func("HGV Count = %s" % str(hgv_count))
     
@@ -165,7 +144,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 forecast_goods_array[f_key][:hgv_count,:hgv_count]) # hgv_count replaces 783
         
         # Adjust TMfS Forecast matrices
-        if rebasing_run is True:
+        if is_rebasing_run is True:
             new_forecast_array[f_key] = base_goods_array[f_key]
         else:
             nrtf_col = ["LGV","OGV"][["LGV","HGV"].index(goods_type)]

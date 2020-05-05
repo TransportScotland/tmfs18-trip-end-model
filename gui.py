@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 import queue
+import traceback
 from telmos_script import telmos_all
 from widget_templates import LabelledEntry, CreateToolTip, TextLog
 
@@ -155,11 +156,19 @@ class Application:
     def listen_for_result(self):
         # Check if something is in queue
         try:
-            self.res = self.thread_queue.get(0)
+            exc = self.thread_queue.get(0)
             # terminated
             self.b["state"] = "normal"
         except queue.Empty:
             self.root.after(100, self.listen_for_result)
+        else:
+            # If exception was raised print to the log
+            if exc is not None:
+                self.log.add_message(
+                        "\n".join(traceback.format_exception_only(exc[0], exc[1])),
+                        color="RED")
+            self.b["state"] = "normal"
+        #self.new_thread.join(0.1)
         
         
 
