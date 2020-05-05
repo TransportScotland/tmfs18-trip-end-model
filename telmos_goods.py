@@ -36,7 +36,7 @@ def load_goods_data(goods_file, hgv_output, lgv_output):
 
 def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
-                do_output=False, debug=True, log_func=print):
+                log_func=print):
     # Set this to true if run is rebasing from TMfS07 to TMfS12 or 
     # TMfS12 to TMfs14 => it resets the GV growth to 1.00
 
@@ -79,15 +79,13 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     hgv_base_array, lgv_base_array = load_goods_data(base_goods_file, 
                                                      base_hgv_file, base_lgv_file)
     
-    hgv_count = hgv_base_array.shape[0]
-    lgv_count = lgv_base_array.shape[0] ## This was an error in TMfS14 - but it is not used
-    # # # # # # # # # # # # # # # 
+    zone_count = hgv_base_array.shape[0]
     
     # Repeat for tel data
     hgv_tel_array, lgv_tel_array = load_goods_data(tel_goods_file, 
                                                    tel_hgv_file, tel_lgv_file)
 
-    log_func("HGV Count = %s" % str(hgv_count))
+    log_func("HGV Count = %s" % str(zone_count))
     
     # # # # # # # # # # # # # # # 
     
@@ -133,15 +131,15 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 index_col=[0,1]).unstack(-1))
         
         # Apply growth for forecast 
-        forecast_goods_array[f_key] = (base_goods_array[f_key][:hgv_count,:hgv_count] * 
-                            goods_growth_array[goods_type][:hgv_count,:hgv_count])
+        forecast_goods_array[f_key] = (base_goods_array[f_key][:zone_count,:zone_count] * 
+                            goods_growth_array[goods_type][:zone_count,:zone_count])
         
         # Sum of base and forecast matrices - Only up to 783 - changed to hgv_count
         # to reflect number of zones
         goods_total["%s_base" % f_key] = np.sum(
-                base_goods_array[f_key][:hgv_count,:hgv_count]) # hgv_count replaces 783
+                base_goods_array[f_key][:zone_count,:zone_count]) # hgv_count replaces 783
         goods_total["%s_forecast" % f_key] = np.sum(
-                forecast_goods_array[f_key][:hgv_count,:hgv_count]) # hgv_count replaces 783
+                forecast_goods_array[f_key][:zone_count,:zone_count]) # hgv_count replaces 783
         
         # Adjust TMfS Forecast matrices
         if is_rebasing_run is True:
@@ -158,18 +156,17 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                                         nrtf_array.PERIOD==
                                                 int(base_year)+2000][nrtf_col].values[0]))
             # For up to hgv_count use the following
-            new_forecast_array[f_key][:hgv_count,:hgv_count] = (
-                    forecast_goods_array[f_key][:hgv_count,:hgv_count] * 
+            new_forecast_array[f_key][:zone_count,:zone_count] = (
+                    forecast_goods_array[f_key][:zone_count,:zone_count] * 
                     ((goods_total["%s_base" % f_key] * goods_totals["TEL_%s" % goods_type]) / 
                      (goods_total["%s_forecast" % f_key] * goods_totals["BASE_%s" % goods_type]))
                     )
-        # Print these files as stack
-        if do_output:
-            df = pd.DataFrame(new_forecast_array[f_key]).stack().reset_index()
-            df.loc[:,:"level_1"] = df.loc[:,:"level_1"] + 1
-            df.to_csv(os.path.join(tel_filebase, filename), index=False, 
-                      header=False, float_format="%.3f")
-            log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
+        # Print these files stacked
+        df = pd.DataFrame(new_forecast_array[f_key]).stack().reset_index()
+        df.loc[:,:"level_1"] = df.loc[:,:"level_1"] + 1
+        df.to_csv(os.path.join(tel_filebase, filename), index=False, 
+                  header=False, float_format="%.3f")
+        log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
             
         # Create Trip End Files
         te_array = np.stack((np.arange(new_forecast_array[f_key].shape[0]) + 1,
@@ -177,61 +174,14 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                              new_forecast_array[f_key].sum(axis=0)), axis=1)
         if te_array.nbytes < 500:
             log_func("Trip End Array is incomplete")
-        if do_output:
-            np.savetxt(os.path.join(tel_filebase, filename.replace(".DAT","TE.DAT")),
-                       te_array, fmt=["%d","%.3f","%.3f"], delimiter=",")
-            log_func("Goods TE saved to %s" % str(os.path.join(tel_filebase,
-                                                     filename.replace(".DAT","TE.DAT"))))
-            
-    # Check against supplied files
-    if debug is True:
-        log_func("\nChecking against previous files in directory 'Received Data'\n")
-        files = ["Base HGV", "Base LGV", "TEL HGV", "TEL LGV"] + [f for f in 
-                filenames] + [f.replace(".DAT", "TE.DAT") for f in filenames]
-        diffs = {k:0 for k in files}
-        produced_path = os.path.join(tmfs_root, "Runs", tel_year, 
-                                        "Demand", tel_id)
-        produced_files = [base_hgv_file, base_lgv_file, tel_hgv_file, 
-                          tel_lgv_file] + [os.path.join(tel_filebase, filename)
-                          for filename in filenames] + [os.path.join(
-                                  tel_filebase, filename.replace(
-                                          ".DAT", "TE.DAT")) for filename in filenames]
-                          
-        check_path_out = os.path.join("Received Data", "Output", "37DSL_out")
-        check_path_in = os.path.join("Received Data", "Input", "Runs", "14", 
-                                     "Demand", "AAE")
-        check_files = [os.path.join(check_path_in, "hgv14AAE.dat"),
-                       os.path.join(check_path_in, "lgv14AAE.dat"),
-                       os.path.join(check_path_out, "hgv37DSL.dat"),
-                       os.path.join(check_path_out, "lgv37DSL.dat"),
-                       ] + [os.path.join(check_path_out, filename) 
-                       for filename in filenames
-                       ] + [os.path.join(check_path_out, 
-                       filename.replace(".DAT", "TE.DAT")) for filename in filenames]
-                       
-        for name, p, c in zip(files, produced_files, check_files):
-            skiprows = 0
-            p_total = np.loadtxt(p, skiprows=skiprows, delimiter=",").sum()
-            c_total = np.loadtxt(c, skiprows=skiprows, delimiter=",").sum()
-            diffs[name] = (p_total - c_total) / c_total
-        return diffs
+        np.savetxt(os.path.join(tel_filebase, filename.replace(".DAT","TE.DAT")),
+                   te_array, fmt=["%d","%.3f","%.3f"], delimiter=",")
+        log_func("Goods TE saved to %s" % str(os.path.join(tel_filebase,
+                                                 filename.replace(".DAT","TE.DAT"))))
             
     # Check array sizes are > 250KBytes
     for k, array in new_forecast_array.items():
         if array.nbytes < 250000:
             log_func("Array is incomplete %s" % k)
                     
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         

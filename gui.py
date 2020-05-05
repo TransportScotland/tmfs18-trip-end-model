@@ -19,7 +19,7 @@ class Application:
         self.root.title("TMfS18 Trip End Model")
         var_names = ["delta_root","tmfs_root", "tel_year", "tel_id", "tel_scenario", 
                      "base_year", "base_id", "base_scenario"]
-        extra_var_names = ["rebasing_run", "do_outputs", "debug"]
+        extra_var_names = ["rebasing_run"]
         var_defaults = ['Data/Structure/delta_root', 
                          'Data/Structure/tmfs_root', 
                          '18', 'AAL', 'AL', 
@@ -65,17 +65,19 @@ class Application:
         # Directory information
         directory_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
         directory_frame.pack()
-        delta_dir_tt = ("Contains paths - '{Base Scenario}/trfl{Base Year}"
-                        "{Base Scenario}.dat' and '{Future Scenario}/"
-                        "[tav_/tmfs/trfl]{Future Year}{Future Scenario}.dat'")
+        delta_dir_tt = ("Contains folders containing the TELMoS planning data csv files "
+                        "and goods dat files. Folders and files should be named according to the "
+                        "year and scenario code.")
         delta_dir = LabelledEntry(directory_frame, "Delta Root Directory", 
                                   self.vars["delta_root"],
                                   pack_side="left", inter_pack_side="top",
                                   w=30, text_style="HEAD.TLabel",
                                   tool_tip_text=delta_dir_tt)
         delta_dir.add_directory()
-        tmfs_dir_tt = ("Contains paths - 'Runs/{Year}/Demand/{ID}/' for both "
-                       "base and demand scenarios")
+        tmfs_dir_tt = ("Contains the 'Factors' folder and the 'Runs' folder.\n"
+                       "'Factors' contains all internal files used by the model\n"
+                       "'Runs' contains the folder structure 'Year'/Demand/'ID' "
+                       "and should also include the base year files")
         tmfs_dir = LabelledEntry(directory_frame, "TMfS Root Directory", 
                                   self.vars["tmfs_root"],
                                   pack_side="left", inter_pack_side="top",
@@ -112,16 +114,6 @@ class Application:
                                    variable=self.vars["rebasing_run"])
         CreateToolTip(rebasing, text="Tick if a rebasing run is required")
         rebasing.pack(side="left", padx=5)
-        output = ttk.Checkbutton(options_frame, text="Create Ouput Files",
-                                   variable=self.vars["do_outputs"])
-        CreateToolTip(output, text="Tick if output files should be printed")
-        output.pack(side="left", padx=5)
-        debug = ttk.Checkbutton(options_frame, text="Debug Mode",
-                                   variable=self.vars["debug"])
-        CreateToolTip(debug, text=("Tick if checking against previous versions."
-                                   " The correct data should be placed in '"
-                                   "Received Data/[Input/Output]/'"))
-        debug.pack(side="left", padx=5)
         
         # Execute frame
         run_frame.pack(fill="x")
@@ -167,6 +159,7 @@ class Application:
                 self.log.add_message(
                         "\n".join(traceback.format_exception_only(exc[0], exc[1])),
                         color="RED")
+                traceback.print_tb(exc[2])
             self.b["state"] = "normal"
         #self.new_thread.join(0.1)
         
