@@ -116,7 +116,7 @@ def telmos_addins(delta_root, tmfs_root,
             
         out_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand",
                                 tel_id, filename.replace(".DAT", "TE.DAT"))
-        format_string = ["%d"] + ["%.3f" for x in range(te_array.shape[1]-1)]
+        format_string = ["%d"] + ["%.3f" for _ in range(te_array.shape[1]-1)]
         np.savetxt(out_file, te_array, delimiter=",", fmt=format_string)
         log_func("Saved Trip Ends to %s" % str(out_file))
         produced_files.append(out_file)
