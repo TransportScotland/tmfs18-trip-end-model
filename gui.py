@@ -65,9 +65,12 @@ class Application:
         # Directory information
         directory_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
         directory_frame.pack()
-        delta_dir_tt = ("Contains folders containing the TELMoS planning data csv files "
+        delta_dir_tt = ("Has sub-directories containing the TELMoS planning data csv files "
                         "and goods dat files. Folders and files should be named according to the "
-                        "year and scenario code.")
+                        "year and scenario code.\n"
+                        "E.g. DELTA\\DL\\{PlanningData} where DELTA is the directory "
+                        "to be selected and DL is one of the scenario codes.\n"
+                        "See the README for info on the required planning data." )
         delta_dir = LabelledEntry(directory_frame, "Delta Root Directory", 
                                   self.vars["delta_root"],
                                   pack_side="left", inter_pack_side="top",
@@ -75,9 +78,15 @@ class Application:
                                   tool_tip_text=delta_dir_tt)
         delta_dir.add_directory()
         tmfs_dir_tt = ("Contains the 'Factors' folder and the 'Runs' folder.\n"
-                       "'Factors' contains all internal files used by the model\n"
-                       "'Runs' contains the folder structure 'Year'/Demand/'ID' "
-                       "and should also include the base year files")
+                       "'Factors' contains all internal factor files used by the model\n"
+                       "'Runs' contains the base year trip ends and is where the model "
+                       "will output the new trip ends.\n"
+                       "E.g. TMFS\\Factors\\{FactorsFiles}; and "
+                       "TMFS\\Runs\\18\\Demand\\ADL\\{TripEndFiles} where TMFS "
+                       "is the directory to be selected, 18 is the base year "
+                       "and ADL is the base ID. An empty directory should also be "
+                       "created for the forecast year\n"
+                       "See the README for info on the required factors files.")
         tmfs_dir = LabelledEntry(directory_frame, "TMfS Root Directory", 
                                   self.vars["tmfs_root"],
                                   pack_side="left", inter_pack_side="top",

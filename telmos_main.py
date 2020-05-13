@@ -17,7 +17,7 @@ FEMALE_STUDENT_FACTOR = 0.2453
 
 def read_trip_rates(factors_dir, just_pivots):
     '''
-    Loads the production trip rate files into
+    Loads the production trip rate files into a numpy array
     '''
     purposes = ["HBW", "HBO", "HBE", "HBS"]
     modes = ["Car", "PT"]
@@ -226,7 +226,8 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
                 log_func=print, just_pivots=False):
     '''
-    Conversion of the TMfS14 Visual Basic application 
+    Applies growth to base year trip end files for input into the second stage 
+    of the TMfS18 trip end model
     '''
     
     
