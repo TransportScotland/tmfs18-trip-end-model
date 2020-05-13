@@ -16,22 +16,36 @@ def load_goods_data(goods_file, hgv_output, lgv_output):
     Loading function for TELMoS goods files
     Splits the data into LGV and HGV parts
     '''
+    hgv_lines = []
+    lgv_lines = []
+    # Inconsistent format of input data - iterate through
+    # lines, use indicator to check if HGV / LGV
     with open(goods_file, "r") as f:
-        data = f.readlines()
-    # Discard header
-    data = np.asarray([line.split() for line in data if (line.split()[0] == "1" or 
-                                      line.split()[0] == "2")],dtype="float64")
-        
-    hgv_array = pd.DataFrame(data[data[:,0]==1][:,1:])
-    lgv_array = pd.DataFrame(data[data[:,0]==2][:,1:])
-    #Print to separate files
-    pd.concat((hgv_array.loc[:,:1].astype("int16"),hgv_array.loc[:,2]),axis=1).to_csv(
-        hgv_output, index=False, header=False)
-    pd.concat((lgv_array.loc[:,:1].astype("int16"),lgv_array.loc[:,2]),axis=1).to_csv(
-        lgv_output, index=False, header=False)
+        for line in f:
+            split_line = line.split()
+            indicator = split_line.pop(0)
+            if indicator == "1":
+                hgv_lines.append(split_line)
+            elif indicator == "2":
+                lgv_lines.append(split_line)
+            else:
+                continue
     
-    hgv_array = np.array(hgv_array.set_index([0,1]).unstack(-1))
-    lgv_array = np.array(lgv_array.set_index([0,1]).unstack(-1))
+    # Frame should have 3 columns
+    # TODO: in both cases, check all lines have the right number of entries.
+    hgv_df = pd.DataFrame(hgv_lines, columns=["I", "J", "V"], dtype="float64")
+    lgv_df = pd.DataFrame(lgv_lines, columns=["I", "J", "V"], dtype="float64")
+    
+    # Rewrap zone numbers as integers
+    for df in (hgv_df, lgv_df):
+        df["I"] = df["I"].astype(int)
+        df["J"] = df["J"].astype(int)
+    
+    hgv_df.to_csv(hgv_output, index=False, header=False)
+    lgv_df.to_csv(lgv_output, index=False, header=False)
+    
+    hgv_array = hgv_df.pivot_table(index="I", columns="J").to_numpy()
+    lgv_array = lgv_df.pivot_table(index="I", columns="J").to_numpy()
     return (hgv_array, lgv_array)
 
 def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
@@ -163,7 +177,12 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                     )
         # Print these files stacked
         df = pd.DataFrame(new_forecast_array[f_key]).stack().reset_index()
-        df.loc[:,:"level_1"] = df.loc[:,:"level_1"] + 1
+        df.columns = ['I', 'J', 'V']
+        
+        # Change zone numbers from 0-based to 1-based
+        df['I'] += 1
+        df['J'] += 1
+        
         df.to_csv(os.path.join(tel_filebase, filename), index=False, 
                   header=False, float_format="%.3f")
         log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
