@@ -29,12 +29,10 @@ def read_trip_rates(factors_dir, just_pivots):
     sr_array = []
     for suffix in suffixes:
         data = []
-        names = []
         for period, purpose, mode in product(periods, purposes, modes):
             file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, suffix)
             factor_file = os.path.join(factors_dir, file_name)
             data.append(np.loadtxt(factor_file))
-            names.append(file_name)
         sr_array.append(data)
     return np.asarray(sr_array)
 
