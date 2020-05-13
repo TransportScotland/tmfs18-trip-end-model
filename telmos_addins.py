@@ -60,8 +60,14 @@ def telmos_addins(delta_root, tmfs_root,
             new_addin_array[f_key][:low_zones,:low_zones] = (
                     addin_array[f_key][:low_zones,:low_zones])
             
-            # Print the matrix as a column
-            matrix_to_odfile(new_addin_array[f_key].round(3), out_file)
+            # Set the output options for non PT files - only one column is used
+            output_array = new_addin_array[f_key].round(3)
+            num_columns = 1
+            
+            # Set the output options for TE.DAT summary files
+            te_array = np.stack((np.arange(new_addin_array[f_key].shape[0]) + 1,
+                                 new_addin_array[f_key].sum(axis=1),
+                                 new_addin_array[f_key].sum(axis=0)), axis=1)
             
         else:
             # Loop through the 3 pt matrices and apply psv factor from nrtf array
@@ -74,20 +80,11 @@ def telmos_addins(delta_root, tmfs_root,
                         addin_array[f_key][i][:low_zones,:low_zones])
             new_addin_array[f_key] = new_pt_arrays
             
-            # Print the matrices as columns
-            matrix_to_odfile([x.round(3) for x in new_addin_array[f_key]], 
-                              out_file, num_columns=3)
+            # Set the output options for PT files - three columns are needed
+            output_array = [x.round(3) for x in new_addin_array[f_key]]
+            num_columns = 3
             
-        log_func("Saved matrix as %s" % str(out_file))
-        produced_files.append(out_file)
-        file_names.append(filename)
-                
-        # Create Trip End Files
-        if "PT" not in f_key:
-            te_array = np.stack((np.arange(new_addin_array[f_key].shape[0]) + 1,
-                                 new_addin_array[f_key].sum(axis=1),
-                                 new_addin_array[f_key].sum(axis=0)), axis=1)
-        else:
+            # Set the output options for TE.DAT summary files
             # For PT, format is:
             #   i, j, o_1, o_2, o_3, d_1, d_2, d_3
             te_array = np.stack((np.arange(new_addin_array[f_key][0].shape[0]) + 1,
@@ -97,6 +94,13 @@ def telmos_addins(delta_root, tmfs_root,
                                  new_addin_array[f_key][0].sum(axis=0),
                                  new_addin_array[f_key][1].sum(axis=0),
                                  new_addin_array[f_key][2].sum(axis=0)), axis=1)
+            
+        # Save full array to .DAT file
+        matrix_to_odfile(output_array, out_file, num_columns=num_columns)
+            
+        log_func("Saved matrix as %s" % str(out_file))
+        produced_files.append(out_file)
+        file_names.append(filename)
             
         # Check File sizes
         try:
