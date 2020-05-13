@@ -12,6 +12,9 @@ import os
 import numpy as np
 import pandas as pd
 
+MALE_STUDENT_FACTOR = 0.2794
+FEMALE_STUDENT_FACTOR = 0.2453
+
 def read_trip_rates(factors_dir, just_pivots):
     '''
     Loads the production trip rate files into
@@ -233,13 +236,8 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Load in the student factors and attraction factors separately
     attraction_file = "Attraction Factors.txt"
     attraction_factors = np.loadtxt(os.path.join(factors_base, attraction_file))
-        
-    # [Male student factor, Female student factor]
-    # Used to factor the productions down
-    student_factors = np.array([0.2794, 0.2453])
     
     log_func("Loaded SR Factors with shape: %s" % str(p_trip_rate_array.shape)) # old shape was (24, 6, 8, 11)
-    log_func("Loaded Student Factors with shape: %s" % str(student_factors.shape))
     log_func("Loaded Attraction Factors with shape: %s" % str(attraction_factors.shape))
     
     # Read in planning data and pivoting files
@@ -282,10 +280,10 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Rearrange and account for students
     tmfs_adj_array = np.copy(tmfs_array)
     tmfs_adj_array[:,:3] = tmfs_adj_array[:,2:5]
-    tmfs_adj_array[:,3] = tmfs_adj_array[:,7] * student_factors[0]
-    tmfs_adj_array[:,4] = tmfs_adj_array[:,8] * student_factors[1]
-    tmfs_adj_array[:,7] = tmfs_adj_array[:,7] * (1 - student_factors[0])
-    tmfs_adj_array[:,8] = tmfs_adj_array[:,8] * (1 - student_factors[1])
+    tmfs_adj_array[:,3] = tmfs_adj_array[:,7] * MALE_STUDENT_FACTOR
+    tmfs_adj_array[:,4] = tmfs_adj_array[:,8] * FEMALE_STUDENT_FACTOR
+    tmfs_adj_array[:,7] = tmfs_adj_array[:,7] * (1 - MALE_STUDENT_FACTOR)
+    tmfs_adj_array[:,8] = tmfs_adj_array[:,8] * (1 - FEMALE_STUDENT_FACTOR)
 
     log_func("TAV Base Array shape = %s" % str(tav_base_array.shape))
     log_func("TMFS Array shape = %s" % str(tmfs_array.shape))
