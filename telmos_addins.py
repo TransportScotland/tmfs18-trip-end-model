@@ -24,10 +24,6 @@ def telmos_addins(delta_root, tmfs_root,
     #                ;; to the rest of the model
     low_zones = 787
     
-    # Following store the output file names and paths for debugging purposes
-    file_names = []
-    produced_files = []
-    
     purposes = ["PT", "COM", "EMP", "OTH"]
     periods = ["AM", "IP", "PM"]
     filenames = ["%s%s.DAT" % (period, purpose) for period in periods 
@@ -99,8 +95,6 @@ def telmos_addins(delta_root, tmfs_root,
         matrix_to_odfile(output_array, out_file, num_columns=num_columns)
             
         log_func("Saved matrix as %s" % str(out_file))
-        produced_files.append(out_file)
-        file_names.append(filename)
             
         # Check File sizes
         try:
@@ -119,7 +113,5 @@ def telmos_addins(delta_root, tmfs_root,
         format_string = ["%d"] + ["%.3f" for _ in range(te_array.shape[1]-1)]
         np.savetxt(out_file, te_array, delimiter=",", fmt=format_string)
         log_func("Saved Trip Ends to %s" % str(out_file))
-        produced_files.append(out_file)
-        file_names.append(filename.replace(".DAT", "TE.DAT"))
                 
                 
