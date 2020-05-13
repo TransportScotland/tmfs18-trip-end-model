@@ -59,14 +59,12 @@ def create_attraction_pivot(planning_data, attraction_trip_rates):
     Multiplies the planning data and the attraction trip rates
     '''
     # Columns are: Work, Employment, Other, Education
-    attr_factors_array = np.zeros((planning_data.shape[0], 4),dtype="float32")
+    attr_factors_array = np.ones((planning_data.shape[0], 4),dtype="float32")
     attr_factors_array[:,0] = planning_data[:,2] * attraction_trip_rates[0, 0]
     attr_factors_array[:,1] = planning_data[:,[1,3,4,5,6,7,8]].sum(axis=1) * attraction_trip_rates[2,1]
     attr_factors_array[:,2] = (planning_data[:,[4,8,1,3]] * 
                       attraction_trip_rates[[6,7,1,12],[3,4,8,9]]).sum(axis=1)
     attr_factors_array[:,3] = planning_data[:,7] * attraction_trip_rates[2,2]
-    # Fill zeros with ones
-    attr_factors_array[attr_factors_array == 0.0] = 1.0
     return attr_factors_array
 
 def create_production_pivot(planning_data, production_trip_rates, area_correspondence,
@@ -99,7 +97,7 @@ def create_production_pivot(planning_data, production_trip_rates, area_correspon
                     check.write(str(sr_prod_array[k,i,j]))
                     check.write("\n")
                     
-    prod_factor_array = np.zeros(output_shape)
+    prod_factor_array = np.ones(output_shape)
     
     # Just Pivots is a debug option to output an extended version of the pivoting files
     # Originally outputs just 64 columns - 2 periods * 4 Purposes * 2 Modes * 4 Household types
@@ -144,8 +142,6 @@ def create_production_pivot(planning_data, production_trip_rates, area_correspon
                 cd += 4
 
             prod_factor_array[i, j] = v
-                
-    prod_factor_array[prod_factor_array == 0] = 1
     
     return prod_factor_array
 
