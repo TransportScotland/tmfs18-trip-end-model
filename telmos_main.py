@@ -44,13 +44,14 @@ def load_cte_tod_files(tod_files, cte_files, file_base):
     for t_file, c_file in zip(tod_files, cte_files):
         # TMfS14 had a long-distance module that required some CTE/TOD files to have
         # _All appended to the end. This can now be removed if needed.
-        if (os.path.exists(os.path.join(file_base, t_file)) and
-               os.path.exists(os.path.join(file_base, c_file))):
-            t_file_name = t_file
-            c_file_name = c_file
-        else:
-            t_file_name = t_file.replace("_ALL","")
-            c_file_name = c_file.replace("_ALL","")
+        t_file_name = (
+            t_file if os.path.isfile(os.path.join(file_base, t_file))
+            else t_file.upper().replace("_ALL", "")
+        )
+        c_file_name = (
+            c_file if os.path.isfile(os.path.join(file_base, c_file))
+            else c_file.upper().replace("_ALL", "")
+        )
         tod_data.append(np.loadtxt(os.path.join(file_base, t_file_name),
                                    delimiter=","))
         cte_data.append(np.loadtxt(os.path.join(file_base, c_file_name),
