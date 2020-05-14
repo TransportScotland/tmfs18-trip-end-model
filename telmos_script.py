@@ -24,8 +24,8 @@ def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year,
     try:
         # Create a new directory for the output if it does not already exist
         output_dir = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id)
-        if os.path.exists(output_dir) is False:
-            os.mkdir(output_dir)
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
         
         telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                     base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
