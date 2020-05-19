@@ -214,7 +214,7 @@ def apply_pivot_files(tod_data, cte_data,
         # Otherwise...
         else:
             sw_cte_array[j,:,8] = (cte_data[j,:,8] * 
-                        production_growth[:,attr_growth_idxs[j]] * 
+                        attraction_growth[:,attr_growth_idxs[j]] * 
                         airport_growth)
     
     return (sw_array, sw_cte_array)
