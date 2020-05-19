@@ -147,6 +147,14 @@ def create_production_pivot(planning_data, production_trip_rates, area_correspon
     
     return prod_factor_array
 
+def calculate_growth(base, forecast):
+    growth = forecast / base
+    growth = np.select(
+        [np.isinf(growth), np.isnan(growth)],
+        [forecast, 1], default=growth
+    )
+    return growth
+
 def apply_pivot_files(tod_data, cte_data, 
                       production_growth, attraction_growth,
                       airport_growth):
@@ -300,9 +308,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     log_func("Attraction Factors saved to %s" % str(attr_file))
 
     # Calculate Attraction Growth Factors
-    attr_growth_array = attr_factors_array / tav_base_array
-    # Replace Infinite values with 1
-    attr_growth_array[attr_growth_array == np.inf] = 1.0
+    attr_growth_array = calculate_growth(base=tav_base_array, forecast=attr_factors_array)
 
     # # # # # # # # # # # #
     # Production Factors
@@ -358,8 +364,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     ## # # # # # # # # #
     # Production Growth Factors
     # Calculate growth from the base and tel_year pivot files
-    prod_growth_array = prod_factor_array / tmfs_base_array
-    prod_growth_array[prod_growth_array == np.inf] = 1.0
+    prod_growth_array = calculate_growth(base=tmfs_base_array, forecast=prod_factor_array)
     log_func("Production Growth Array shape = %s" % str(prod_growth_array.shape))
 
     prefixes = ["AM","IP"]
