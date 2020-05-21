@@ -19,7 +19,7 @@ Delta root contains sub-folders named after the scenario code with the TELMoS pl
     * trfl18DL.dat
 
 
-TMfS Root contains the 'Factors' folder and the 'Runs' folder. 'Factors' has the trip rates, area definitions, and growth rates required by the trip end model. 'Runs' contains the base year trip ends and the output from the trip end model. It has the following structure:
+TMfS Root contains the 'Factors' folder and the 'Runs' folder. 'Factors' has the trip rates, area definitions, and growth rates required by the trip end model, including all the data files within the 'standard input' folder. 'Runs' contains the base year trip ends and the output from the trip end model. It has the following structure:
 
 * TMfS Root 
   * Runs
