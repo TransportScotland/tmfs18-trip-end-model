@@ -108,7 +108,7 @@ class Application:
                       tool_tip_text="Base scenario name")
         tel_frame = ttk.Frame(scenario_frame, borderwidth=3, relief=tk.GROOVE)
         tel_frame.pack(side="left", fill="x", expand=True)
-        ttk.Label(tel_frame, text="Tel Scenario", style="HEAD.TLabel").pack()
+        ttk.Label(tel_frame, text="Forecast Scenario", style="HEAD.TLabel").pack()
         LabelledEntry(tel_frame, "Year", self.vars["tel_year"], lw=10, 
                       w=10, anchor="center", tool_tip_text="Future scenario year")
         LabelledEntry(tel_frame, "ID", self.vars["tel_id"], lw=10, 
