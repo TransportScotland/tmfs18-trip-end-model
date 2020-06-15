@@ -22,8 +22,8 @@ class Application:
         extra_var_names = ["rebasing_run"]
         var_defaults = ['Data/Structure/delta_root', 
                          'Data/Structure/tmfs_root', 
-                         '18', 'AAL', 'AL', 
-                         '14', 'AAE', 'AE', 
+                         '', '', '', 
+                         '18', 'ADL', 'DL', 
                          0, 1, 0]
         self.extra_var_defaults = {name:tk.IntVar() for name in extra_var_names}
         self.vars = {name:tk.StringVar() for name in var_names}
