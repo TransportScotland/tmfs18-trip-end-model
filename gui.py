@@ -6,7 +6,9 @@ Created on Wed Jul  3 11:35:25 2019
 """
 
 import tkinter as tk 
-from tkinter import ttk
+from tkinter import ttk, filedialog
+import csv
+import os
 import threading
 import queue
 import traceback
@@ -30,8 +32,13 @@ class Application:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("TMfS18 Trip End Model")
-        var_names = ["delta_root","tmfs_root", "tel_year", "tel_id", "tel_scenario", 
+        self.var_names = ["delta_root","tmfs_root", "tel_year", "tel_id", "tel_scenario", 
                      "base_year", "base_id", "base_scenario"]
+        user_friendly_names = ["Delta Root Directory", "TMfS Root Directory",
+                               "Forecast Year", "Forecast ID", "Forecast Scenario",
+                               "Base Year", "Base ID", "Base Scenario"]
+        self.user_names = {var:name for var, name in zip(
+                self.var_names, user_friendly_names)}
         extra_var_names = ["rebasing_run"]
         var_defaults = ['Data/Structure/delta_root', 
                          'Data/Structure/tmfs_root', 
@@ -39,7 +46,7 @@ class Application:
                          '18', 'ADL', 'DL', 
                          REBASING_RUN]
         self.extra_var_defaults = {name:tk.IntVar() for name in extra_var_names}
-        self.vars = {name:tk.StringVar() for name in var_names}
+        self.vars = {name:tk.StringVar() for name in self.var_names}
         self.vars = {**self.vars, **self.extra_var_defaults}
         for key, value in zip(self.vars, var_defaults):
             self.vars[key].set(value)
@@ -84,7 +91,7 @@ class Application:
                         "E.g. DELTA\\DL\\{PlanningData} where DELTA is the directory "
                         "to be selected and DL is one of the scenario codes.\n"
                         "See the README for info on the required planning data." )
-        delta_dir = LabelledEntry(directory_frame, "Delta Root Directory", 
+        delta_dir = LabelledEntry(directory_frame, self.user_names["delta_root"], 
                                   self.vars["delta_root"],
                                   pack_side="left", inter_pack_side="top",
                                   w=30, text_style="HEAD.TLabel",
@@ -100,7 +107,7 @@ class Application:
                        "and ADL is the base ID. An empty directory should also be "
                        "created for the forecast year\n"
                        "See the README for info on the required factors files.")
-        tmfs_dir = LabelledEntry(directory_frame, "TMfS Root Directory", 
+        tmfs_dir = LabelledEntry(directory_frame, self.user_names["tmfs_root"], 
                                   self.vars["tmfs_root"],
                                   pack_side="left", inter_pack_side="top",
                                   w=30, text_style="HEAD.TLabel",
@@ -112,26 +119,38 @@ class Application:
         base_frame = ttk.Frame(scenario_frame, borderwidth=3, relief=tk.GROOVE)
         base_frame.pack(side="left", fill="x", expand=True)
         ttk.Label(base_frame, text="Base Scenario", style="HEAD.TLabel").pack()
-        LabelledEntry(base_frame, "Year", self.vars["base_year"], lw=10, 
+        LabelledEntry(base_frame, self.user_names["base_year"].split()[1],
+                      self.vars["base_year"], lw=10, 
                       w=10, anchor="center", tool_tip_text="Base scenario year")
-        LabelledEntry(base_frame, "ID", self.vars["base_id"], lw=10, 
+        LabelledEntry(base_frame, self.user_names["base_id"].split()[1], 
+                      self.vars["base_id"], lw=10, 
                       w=10, anchor="center", tool_tip_text="Base scenario ID")
-        LabelledEntry(base_frame, "Scenario", self.vars["base_scenario"], 
+        LabelledEntry(base_frame, self.user_names["base_scenario"].split()[1],
+                      self.vars["base_scenario"], 
                       lw=10, w=10, anchor="center", 
                       tool_tip_text="Base scenario name")
         tel_frame = ttk.Frame(scenario_frame, borderwidth=3, relief=tk.GROOVE)
         tel_frame.pack(side="left", fill="x", expand=True)
         ttk.Label(tel_frame, text="Forecast Scenario", style="HEAD.TLabel").pack()
-        LabelledEntry(tel_frame, "Year", self.vars["tel_year"], lw=10, 
+        LabelledEntry(tel_frame, self.user_names["tel_year"].split()[1],
+                      self.vars["tel_year"], lw=10, 
                       w=10, anchor="center", tool_tip_text="Future scenario year")
-        LabelledEntry(tel_frame, "ID", self.vars["tel_id"], lw=10, 
+        LabelledEntry(tel_frame, self.user_names["tel_id"].split()[1], 
+                      self.vars["tel_id"], lw=10, 
                       w=10, anchor="center", tool_tip_text="Future scenario ID")
-        LabelledEntry(tel_frame, "Scenario", self.vars["tel_scenario"], 
+        LabelledEntry(tel_frame, self.user_names["tel_scenario"].split()[1],
+                      self.vars["tel_scenario"], 
                       lw=10, w=10, anchor="center", 
                       tool_tip_text="Future scenario name")
         # Additional options
         options_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
         options_frame.pack(fill="x")
+        ttk.Button(options_frame, text="Export Settings",
+                   command=self.export_settings).pack(side="left", fill="x", 
+                                               expand=True)
+        ttk.Button(options_frame, text="Import Settings",
+                   command=self.import_settings).pack(side="left", fill="x",
+                                               expand=True)
         
         # Execute frame
         run_frame.pack(fill="x")
@@ -148,7 +167,6 @@ class Application:
         
     def callback_run_script(self):
         args = [x.get() for x in self.vars.values()]
-        print(args)
         for i in range(len(args)):
             if args[i] == 0 or args[i] == 1:
                 args[i] = bool(args[i])
@@ -181,6 +199,48 @@ class Application:
                 traceback.print_tb(exc[2])
             toggle_widgets(self.main_frame, "normal")
         #self.new_thread.join(0.1)
+        
+        
+    def export_settings(self):
+        """
+        Export the current settings to a log file in the corresponding "Runs"
+        directory.
+        """
+        args = {self.user_names[x]:self.vars[x].get() for x in self.user_names}
+        output_dir = os.path.join(self.vars["tmfs_root"].get(), "Runs", 
+                                  self.vars["tel_year"].get(), "Demand", 
+                                  self.vars["tel_id"].get())
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+            self.log.add_message("Created New Directory - {}".format(
+                    output_dir))
+            
+        file_path = os.path.join(output_dir, "settings.txt")
+        with open(file_path, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerows(args.items())
+            
+        self.log.add_message("Exported Settings to {}".format(file_path))
+    
+    
+    def import_settings(self):
+        """
+        Load a previously exported settings file. Does not check content of
+        settings file.
+        """
+        file_path = filedialog.askopenfilename(
+                parent=self.main_frame, title="Select Settings File",
+                filetypes=[("text files", "*.txt")])
+        if file_path == "":
+            return
+        
+        reverse_user_names = {v:k for k, v in self.user_names.items()}
+        with open(file_path, "r") as f:
+            r = csv.reader(f)
+            for row in r:
+                var_name = reverse_user_names[row[0]]
+                self.vars[var_name].set(row[1])
         
         
 
