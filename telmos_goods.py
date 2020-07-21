@@ -31,15 +31,33 @@ def load_goods_data(goods_file, hgv_output, lgv_output):
             else:
                 continue
     
-    # Frame should have 3 columns
-    # TODO: in both cases, check all lines have the right number of entries.
+    # Frame should have 3 columns and an entry for each zone pair 1-803
     hgv_df = pd.DataFrame(hgv_lines, columns=["I", "J", "V"], dtype="float64")
     lgv_df = pd.DataFrame(lgv_lines, columns=["I", "J", "V"], dtype="float64")
+    
+    assert len(hgv_df) == 803*803, "HGV file requires 803 * 803 entries"
+    assert len(lgv_df) == 803*803, "LGV file requires 803 * 803 entries"
+    
+    # TELMoS file zones are numbered with 1-783 as internal, 784-799 external
+    #  and 800-803 internal. These should be renumbered to be in line with 
+    #  TMfS numbering, inserting 800-803 before external zones
+    zone_map = {x:x for x in range(1,804)}
+    # Internal zones 800-803 renumbered to 784-787
+    internal_renumber = {x:(x-16) for x in range(800, 804)}
+    # External zones 784-799 renumbered to 788-803
+    external_renumber = {x:(x+4) for x in range(784, 800)}
+    zone_map = {**zone_map, **internal_renumber, **external_renumber}
     
     # Rewrap zone numbers as integers
     for df in (hgv_df, lgv_df):
         df["I"] = df["I"].astype(int)
         df["J"] = df["J"].astype(int)
+        # Renumber zones
+        df["I"] = df["I"].map(zone_map)
+        df["J"] = df["J"].map(zone_map)
+        # Sort the renumbered dataframe
+        df.sort_values(by=["I", "J"], inplace=True)
+        df.reset_index(drop=True, inplace=True)
     
     hgv_df.to_csv(hgv_output, index=False, header=False)
     lgv_df.to_csv(lgv_output, index=False, header=False)
