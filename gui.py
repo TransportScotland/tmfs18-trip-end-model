@@ -13,6 +13,14 @@ import traceback
 from telmos_script import telmos_all
 from widget_templates import LabelledEntry, CreateToolTip, TextLog
 
+def toggle_widgets(base, target_state):
+    try:
+        base.configure(state=target_state)
+    except:
+        pass
+    for child_widget in base.winfo_children():
+        toggle_widgets(child_widget, target_state)
+
 class Application:
     def __init__(self):
         self.root = tk.Tk()
@@ -36,13 +44,13 @@ class Application:
         
         
     def init_widgets(self):
-        main_frame = ttk.Frame(self.root)
+        self.main_frame = ttk.Frame(self.root)
         log_frame = ttk.Frame(self.root)
-        main_frame.pack(side="left")
+        self.main_frame.pack(side="left")
         log_frame.pack(side="left")
-        title_frame = ttk.Frame(main_frame, borderwidth=3, relief=tk.GROOVE)
-        input_frame = ttk.Frame(main_frame)
-        run_frame = ttk.Frame(main_frame)
+        title_frame = ttk.Frame(self.main_frame, borderwidth=3, relief=tk.GROOVE)
+        input_frame = ttk.Frame(self.main_frame)
+        run_frame = ttk.Frame(self.main_frame)
         
         style = ttk.Style()
         # Headers style
@@ -127,9 +135,9 @@ class Application:
         # Execute frame
         run_frame.pack(fill="x")
         style.configure("BIG.TButton", font=("Helvetica", 12, "bold"))
-        self.b = ttk.Button(run_frame, text="Generate", command=self.callback_run_script,
+        b = ttk.Button(run_frame, text="Generate", command=self.callback_run_script,
                    style="BIG.TButton")
-        self.b.pack(padx=20, pady=10, fill="x")
+        b.pack(padx=20, pady=10, fill="x")
         
         # Log Frame
         ttk.Label(log_frame, text="Event Log", style="HEAD.TLabel").pack(pady=2)
@@ -144,7 +152,7 @@ class Application:
                 args[i] = bool(args[i])
         args = tuple(args)
         
-        self.b["state"] = "disabled"
+        toggle_widgets(self.main_frame, "disabled")
         
         self.thread_queue = queue.Queue()
         self.new_thread = threading.Thread(target=telmos_all,
@@ -159,7 +167,7 @@ class Application:
         try:
             exc = self.thread_queue.get(0)
             # terminated
-            self.b["state"] = "normal"
+            toggle_widgets(self.main_frame, "normal")
         except queue.Empty:
             self.root.after(100, self.listen_for_result)
         else:
@@ -169,7 +177,7 @@ class Application:
                         "\n".join(traceback.format_exception_only(exc[0], exc[1])),
                         color="RED")
                 traceback.print_tb(exc[2])
-            self.b["state"] = "normal"
+            toggle_widgets(self.main_frame, "normal")
         #self.new_thread.join(0.1)
         
         
