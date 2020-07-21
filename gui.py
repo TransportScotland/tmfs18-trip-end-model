@@ -13,6 +13,10 @@ import traceback
 from telmos_script import telmos_all
 from widget_templates import LabelledEntry, CreateToolTip, TextLog
 
+
+REBASING_RUN = 0
+
+
 def toggle_widgets(base, target_state):
     try:
         base.configure(state=target_state)
@@ -20,6 +24,7 @@ def toggle_widgets(base, target_state):
         pass
     for child_widget in base.winfo_children():
         toggle_widgets(child_widget, target_state)
+        
 
 class Application:
     def __init__(self):
@@ -32,7 +37,7 @@ class Application:
                          'Data/Structure/tmfs_root', 
                          '', '', '', 
                          '18', 'ADL', 'DL', 
-                         0, 1, 0]
+                         REBASING_RUN]
         self.extra_var_defaults = {name:tk.IntVar() for name in extra_var_names}
         self.vars = {name:tk.StringVar() for name in var_names}
         self.vars = {**self.vars, **self.extra_var_defaults}
@@ -127,10 +132,6 @@ class Application:
         # Additional options
         options_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
         options_frame.pack(fill="x")
-        rebasing = ttk.Checkbutton(options_frame, text="Rebasing Run",
-                                   variable=self.vars["rebasing_run"])
-        CreateToolTip(rebasing, text="Tick if a rebasing run is required")
-        rebasing.pack(side="left", padx=5)
         
         # Execute frame
         run_frame.pack(fill="x")
@@ -147,6 +148,7 @@ class Application:
         
     def callback_run_script(self):
         args = [x.get() for x in self.vars.values()]
+        print(args)
         for i in range(len(args)):
             if args[i] == 0 or args[i] == 1:
                 args[i] = bool(args[i])
