@@ -12,6 +12,7 @@ import os
 import threading
 import queue
 import traceback
+from webbrowser import open_new
 from telmos_script import telmos_all
 from widget_templates import LabelledEntry, CreateToolTip, TextLog
 
@@ -26,7 +27,7 @@ def toggle_widgets(base, target_state):
         pass
     for child_widget in base.winfo_children():
         toggle_widgets(child_widget, target_state)
-        
+
 
 class Application:
     def __init__(self):
@@ -74,9 +75,20 @@ class Application:
         title = ttk.Label(title_frame, text="TMfS18 Trip End Model", 
                           style="TIT.TLabel")
         title.pack()
-        sub_text = "Conversion of the VB TMfS14 trip end model"
-        sub_title = ttk.Label(title_frame, text=sub_text)
-        sub_title.pack()
+        sub_text = (
+        "This tool uses TELMoS planning data and trip rates from NTEM to apply "
+        "growth to the calibrated forecast trip ends that are input to the demand model "
+        "of the Transport Model for Scotland (TMfS)."
+        "The trip end files produced by this tool should be run through the"
+        "Cube smoothing process.")
+        sub_title = ttk.Label(title_frame, text=sub_text, wraplength=500)
+        sub_title.pack(fill="x", padx=5, pady=5)
+        github_releases_link = ("https://github.com/TransportScotland/"
+                                "tmfs18-trip-end-model/releases")
+        github_link = ttk.Button(title_frame, text="GitHub Releases", 
+                                 command=lambda : open_new(
+                                         github_releases_link))
+        github_link.pack(anchor="w", padx=5, pady=5)
         
         # User input frame
         # Split into directory selection, scenario definition and other options
@@ -161,7 +173,11 @@ class Application:
         
         # Log Frame
         ttk.Label(log_frame, text="Event Log", style="HEAD.TLabel").pack(pady=2)
-        self.log = TextLog(log_frame, width=50, height=20)
+        self.log = TextLog(log_frame, width=50, height=25)
+        self.progress = ttk.Progressbar(log_frame, length=280, 
+                                        mode="indeterminate")
+        self.progress.stop()
+        self.progress.pack(padx=5, pady=5)
         
         
         
@@ -180,6 +196,7 @@ class Application:
         self.new_thread._kwargs = {"thread_queue":self.thread_queue,
                                    "print_func":self.log.add_message}
         self.new_thread.start()
+        self.progress.start()
         self.root.after(100, self.listen_for_result)
         
     def listen_for_result(self):
@@ -188,6 +205,8 @@ class Application:
             exc = self.thread_queue.get(0)
             # terminated
             toggle_widgets(self.main_frame, "normal")
+            self.progress.stop()
+            self.new_thread.join()
         except queue.Empty:
             self.root.after(100, self.listen_for_result)
         else:
@@ -198,7 +217,9 @@ class Application:
                         color="RED")
                 traceback.print_tb(exc[2])
             toggle_widgets(self.main_frame, "normal")
-        #self.new_thread.join(0.1)
+            self.progress.stop()
+            self.new_thread.join()
+        
         
         
     def export_settings(self):
