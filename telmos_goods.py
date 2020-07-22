@@ -81,8 +81,6 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # sr2
     base_goods_file = os.path.join(delta_root, base_scenario, 
                                   "trfl%s%s.dat" % (base_year, base_scenario))
-    
-    nrtf_file = os.path.join(tmfs_root, "Factors", "NRTF.DAT")
     # # # # # # # # # # 
     
     # # # Outputs # # # 
@@ -142,9 +140,6 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     
     goods_growth_array = {"HGV":hgv_tel_array / hgv_base_array,
                           "LGV":lgv_tel_array / lgv_base_array}
-    
-    # Load NRTF Array
-    nrtf_array = pd.read_csv(nrtf_file)
         
     # # # # Read base am/ip/pm hgv/lgv files
     base_goods_array = {}
@@ -177,22 +172,14 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         if is_rebasing_run is True:
             new_forecast_array[f_key] = base_goods_array[f_key]
         else:
-            nrtf_col = ["LGV","OGV"][["LGV","HGV"].index(goods_type)]
-            
-            # For 784 - 799 use the following
-            new_forecast_array[f_key] = (base_goods_array[f_key] * 
-                              (nrtf_array.loc[
-                                      nrtf_array.PERIOD==
-                                              int(tel_year)+2000][nrtf_col].values[0] / 
-                                nrtf_array.loc[
-                                        nrtf_array.PERIOD==
-                                                int(base_year)+2000][nrtf_col].values[0]))
-            # For up to hgv_count use the following
-            new_forecast_array[f_key][:zone_count,:zone_count] = (
-                    forecast_goods_array[f_key][:zone_count,:zone_count] * 
-                    ((goods_total["%s_base" % f_key] * goods_totals["TEL_%s" % goods_type]) / 
-                     (goods_total["%s_forecast" % f_key] * goods_totals["BASE_%s" % goods_type]))
-                    )
+            # Road Traaffic Forecast no longer used for external zones - 
+            #  TELMoS forecast goods files now include all zones
+            new_forecast_array[f_key] = (
+                    forecast_goods_array[f_key] * 
+                    ((goods_total["%s_base" % f_key] * 
+                      goods_totals["TEL_%s" % goods_type]) / 
+                     (goods_total["%s_forecast" % f_key] * 
+                      goods_totals["BASE_%s" % goods_type])))
         # Print these files stacked
         df = pd.DataFrame(new_forecast_array[f_key]).stack().reset_index()
         df.columns = ['I', 'J', 'V']
