@@ -27,12 +27,13 @@ def toggle_widgets(base, target_state):
         pass
     for child_widget in base.winfo_children():
         toggle_widgets(child_widget, target_state)
+        
 
 
 class Application:
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("TMfS18 Trip End Model")
+    def __init__(self, parent):
+        parent.title("TMfS18 Trip End Model")
+        self.after = parent.after
         self.var_names = ["delta_root","tmfs_root", "tel_year", "tel_id", "tel_scenario", 
                      "base_year", "base_id", "base_scenario"]
         user_friendly_names = ["Delta Root Directory", "TMfS Root Directory",
@@ -52,13 +53,14 @@ class Application:
         for key, value in zip(self.vars, var_defaults):
             self.vars[key].set(value)
         
-        self.init_widgets()
-        self.root.resizable(height=False, width=False)
+        self.new_thread = None
+        self.init_widgets(parent)
+        parent.resizable(height=False, width=False)
         
         
-    def init_widgets(self):
-        self.main_frame = ttk.Frame(self.root)
-        log_frame = ttk.Frame(self.root)
+    def init_widgets(self, parent):
+        self.main_frame = ttk.Frame(parent)
+        log_frame = ttk.Frame(parent)
         self.main_frame.pack(side="left")
         log_frame.pack(side="left")
         title_frame = ttk.Frame(self.main_frame, borderwidth=3, relief=tk.GROOVE)
@@ -195,20 +197,18 @@ class Application:
                                            args=args)
         self.new_thread._kwargs = {"thread_queue":self.thread_queue,
                                    "print_func":self.log.add_message}
+        self.new_thread.daemon = True
         self.new_thread.start()
         self.progress.start()
-        self.root.after(100, self.listen_for_result)
+        self.after(100, self.listen_for_result)
+        
         
     def listen_for_result(self):
         # Check if something is in queue
         try:
             exc = self.thread_queue.get(0)
-            # terminated
-            toggle_widgets(self.main_frame, "normal")
-            self.progress.stop()
-            self.new_thread.join()
         except queue.Empty:
-            self.root.after(100, self.listen_for_result)
+            self.after(100, self.listen_for_result)
         else:
             # If exception was raised print to the log
             if exc is not None:
@@ -218,7 +218,7 @@ class Application:
                 traceback.print_tb(exc[2])
             toggle_widgets(self.main_frame, "normal")
             self.progress.stop()
-            self.new_thread.join()
+            self.new_thread = None
         
         
         
@@ -266,5 +266,9 @@ class Application:
         
 
 if __name__ == "__main__":
-    app = Application()
-    app.root.mainloop()
+    root = tk.Tk()
+    app = Application(root)
+    
+    root.protocol("WM_DELETE_WINDOW", root.destroy)
+    
+    root.mainloop()
