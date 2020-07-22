@@ -29,9 +29,11 @@ def telmos_addins(delta_root, tmfs_root,
     filenames = ["%s%s.DAT" % (period, purpose) for period in periods 
                  for purpose in purposes]
     
-    nrtf_file = os.path.join(tmfs_root, "Factors", "NRTF.DAT")
+    rtf_file = os.path.join(tmfs_root, "Factors", "RTF.DAT")
+    ptf_file = os.path.join(tmfs_root, "Factors", "PTF.DAT")
     # Load NRTF Array
-    nrtf_array = pd.read_csv(nrtf_file)
+    rtf_array = pd.read_csv(rtf_file)
+    ptf_array = pd.read_csv(ptf_file)
     
     addin_array = {}
     new_addin_array = {}
@@ -51,8 +53,10 @@ def telmos_addins(delta_root, tmfs_root,
         if "PT" not in f_key:
             # Different rules if below 'low_zones'
             new_addin_array[f_key] = (addin_array[f_key] * 
-                   nrtf_array.loc[nrtf_array.PERIOD==int(tel_year)+2000]["CARS"].values[0] / 
-                   nrtf_array.loc[nrtf_array.PERIOD==int(base_year)+2000]["CARS"].values[0])
+                   rtf_array.loc[rtf_array.PERIOD==int(tel_year)+2000][
+                           "CARS"].values[0] / 
+                   rtf_array.loc[rtf_array.PERIOD==int(base_year)+2000][
+                           "CARS"].values[0])
             new_addin_array[f_key][:low_zones,:low_zones] = (
                     addin_array[f_key][:low_zones,:low_zones])
             
@@ -70,8 +74,10 @@ def telmos_addins(delta_root, tmfs_root,
             new_pt_arrays = []
             for i in range(len(addin_array[f_key])):
                 new_pt_arrays.append(addin_array[f_key][i] * 
-                         nrtf_array.loc[nrtf_array.PERIOD==int(tel_year)+2000]["PSV"].values[0] / 
-                         nrtf_array.loc[nrtf_array.PERIOD==int(base_year)+2000]["PSV"].values[0])
+                         ptf_array.loc[ptf_array.PERIOD==int(tel_year)+2000][
+                                 "PSV"].values[0] / 
+                         ptf_array.loc[ptf_array.PERIOD==int(base_year)+2000][
+                                 "PSV"].values[0])
                 new_pt_arrays[i][:low_zones,:low_zones] = (
                         addin_array[f_key][i][:low_zones,:low_zones])
             new_addin_array[f_key] = new_pt_arrays
