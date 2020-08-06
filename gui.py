@@ -47,6 +47,8 @@ class Application:
                          '', '', '', 
                          '18', 'ADL', 'DL', 
                          REBASING_RUN]
+        self.rtf_file = tk.StringVar()
+        self.ptf_file = tk.StringVar()
         self.extra_var_defaults = {name:tk.IntVar() for name in extra_var_names}
         self.vars = {name:tk.StringVar() for name in self.var_names}
         self.vars = {**self.vars, **self.extra_var_defaults}
@@ -125,7 +127,8 @@ class Application:
                                   self.vars["tmfs_root"],
                                   pack_side="left", inter_pack_side="top",
                                   w=30, text_style="HEAD.TLabel",
-                                  tool_tip_text=tmfs_dir_tt)
+                                  tool_tip_text=tmfs_dir_tt, 
+                                  dir_callback=self.on_directory_update)
         tmfs_dir.add_directory()
         # Scenario information
         scenario_frame = ttk.Frame(input_frame)
@@ -166,12 +169,27 @@ class Application:
                    command=self.import_settings).pack(side="left", fill="x",
                                                expand=True)
         
+        factor_frame = ttk.Frame(run_frame)
+        rtf_dir = LabelledEntry(factor_frame, "Road Traffic Forecast File", 
+                                  self.rtf_file,
+                                  pack_side="left", inter_pack_side="top",
+                                  w=30, text_style="HEAD.TLabel")
+        ptf_dir = LabelledEntry(factor_frame, "PT Forecast File", 
+                                  self.ptf_file,
+                                  pack_side="left", inter_pack_side="top",
+                                  w=30, text_style="HEAD.TLabel")
+        rtf_dir.add_browse(os.getcwd())
+        ptf_dir.add_browse(os.getcwd())
+        factor_frame.pack()
+        
         # Execute frame
         run_frame.pack(fill="x")
         style.configure("BIG.TButton", font=("Helvetica", 12, "bold"))
         b = ttk.Button(run_frame, text="Generate", command=self.callback_run_script,
                    style="BIG.TButton")
         b.pack(padx=20, pady=10, fill="x")
+        
+        
         
         # Log Frame
         ttk.Label(log_frame, text="Event Log", style="HEAD.TLabel").pack(pady=2)
@@ -196,7 +214,9 @@ class Application:
         self.new_thread = threading.Thread(target=telmos_all,
                                            args=args)
         self.new_thread._kwargs = {"thread_queue":self.thread_queue,
-                                   "print_func":self.log.add_message}
+                                   "print_func":self.log.add_message,
+                                   "factor_files":[self.rtf_file, 
+                                                   self.ptf_file]}
         self.new_thread.daemon = True
         self.new_thread.start()
         self.progress.start()
@@ -262,7 +282,11 @@ class Application:
             for row in r:
                 var_name = reverse_user_names[row[0]]
                 self.vars[var_name].set(row[1])
+        self.on_directory_update(self.vars["tmfs_root"].get())
         
+    def on_directory_update(self, text):
+        self.rtf_file.set(os.path.join(text, "Factors", "RTF.DAT"))
+        self.ptf_file.set(os.path.join(text, "Factors", "PTF.DAT"))
         
 
 if __name__ == "__main__":
