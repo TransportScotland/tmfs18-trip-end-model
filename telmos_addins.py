@@ -104,7 +104,7 @@ def telmos_addins(delta_root, tmfs_root,
                                  new_addin_array[f_key][2].sum(axis=0)), axis=1)
             
         # Save full array to .DAT file
-        matrix_to_odfile(output_array, out_file, num_columns=num_columns)
+#        matrix_to_odfile(output_array, out_file, num_columns=num_columns)
             
         log_func("Saved matrix as %s" % str(out_file))
             
