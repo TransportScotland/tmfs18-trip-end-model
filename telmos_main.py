@@ -316,7 +316,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Production Factors
     area_corres_file = os.path.join(tmfs_root, "Factors", "AreaCorrespondence.csv")
     area_corres_array = np.loadtxt(area_corres_file, skiprows=1, delimiter=",",
-                                   usecols=2, dtype="int8")
+                                   usecols=1, dtype="int8")
     # Area correspondence array maps tmfs18 zones to their urban rural classification
     area_corres_array = np.repeat(area_corres_array, 8)
     log_func("Area Correspondence shape = %s" % str(area_corres_array.shape))
