@@ -188,9 +188,9 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         df['I'] += 1
         df['J'] += 1
         
-        df.to_csv(os.path.join(tel_filebase, filename), index=False, 
-                  header=False, float_format="%.9f")
-        log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
+#        df.to_csv(os.path.join(tel_filebase, filename), index=False, 
+#                  header=False, float_format="%.9f")
+#        log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
             
         # Create Trip End Files
         te_array = np.stack((np.arange(new_forecast_array[f_key].shape[0]) + 1,
