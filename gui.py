@@ -49,6 +49,7 @@ class Application:
                          REBASING_RUN]
         self.rtf_file = tk.StringVar()
         self.ptf_file = tk.StringVar()
+        self.airport_growth = tk.StringVar()
         self.extra_var_defaults = {name:tk.IntVar() for name in extra_var_names}
         self.vars = {name:tk.StringVar() for name in self.var_names}
         self.vars = {**self.vars, **self.extra_var_defaults}
@@ -160,6 +161,25 @@ class Application:
                       lw=10, w=10, anchor="center", 
                       tool_tip_text="Future scenario name")
         # Additional options
+        
+        factor_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
+        rtf_dir = LabelledEntry(factor_frame, "Road Traffic Forecast File", 
+                                  self.rtf_file,
+                                  pack_side="top", inter_pack_side="left",
+                                  w=30, lw=25, text_style="HEAD.TLabel")
+        ptf_dir = LabelledEntry(factor_frame, "PT Forecast File", 
+                                  self.ptf_file,
+                                  pack_side="top", inter_pack_side="left",
+                                  w=30, lw=25, text_style="HEAD.TLabel")
+        air_dir = LabelledEntry(factor_frame, "Airport Growth File", 
+                                  self.airport_growth,
+                                  pack_side="top", inter_pack_side="left",
+                                  w=30, lw=25, text_style="HEAD.TLabel")
+        rtf_dir.add_browse(os.getcwd())
+        ptf_dir.add_browse(os.getcwd())
+        air_dir.add_browse(os.getcwd())
+        factor_frame.pack(anchor="w", fill="x", expand=True)
+        
         options_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
         options_frame.pack(fill="x")
         ttk.Button(options_frame, text="Export Settings",
@@ -168,19 +188,6 @@ class Application:
         ttk.Button(options_frame, text="Import Settings",
                    command=self.import_settings).pack(side="left", fill="x",
                                                expand=True)
-        
-        factor_frame = ttk.Frame(run_frame)
-        rtf_dir = LabelledEntry(factor_frame, "Road Traffic Forecast File", 
-                                  self.rtf_file,
-                                  pack_side="left", inter_pack_side="top",
-                                  w=30, text_style="HEAD.TLabel")
-        ptf_dir = LabelledEntry(factor_frame, "PT Forecast File", 
-                                  self.ptf_file,
-                                  pack_side="left", inter_pack_side="top",
-                                  w=30, text_style="HEAD.TLabel")
-        rtf_dir.add_browse(os.getcwd())
-        ptf_dir.add_browse(os.getcwd())
-        factor_frame.pack()
         
         # Execute frame
         run_frame.pack(fill="x")
@@ -215,8 +222,9 @@ class Application:
                                            args=args)
         self.new_thread._kwargs = {"thread_queue":self.thread_queue,
                                    "print_func":self.log.add_message,
-                                   "factor_files":[self.rtf_file, 
-                                                   self.ptf_file]}
+                                   "factor_files":{"rtf":self.rtf_file.get(), 
+                                                   "ptf":self.ptf_file.get(),
+                                                   "airport":self.airport_growth.get()}}
         self.new_thread.daemon = True
         self.new_thread.start()
         self.progress.start()
@@ -248,6 +256,10 @@ class Application:
         directory.
         """
         args = {self.user_names[x]:self.vars[x].get() for x in self.user_names}
+        factor_files = {"RTF File": self.rtf_file.get(),
+                        "PTF File": self.ptf_file.get(),
+                        "Airport Growth File": self.airport_growth.get()}
+        args = {**args, **factor_files}
         output_dir = os.path.join(self.vars["tmfs_root"].get(), "Runs", 
                                   self.vars["tel_year"].get(), "Demand", 
                                   self.vars["tel_id"].get())
@@ -277,16 +289,29 @@ class Application:
             return
         
         reverse_user_names = {v:k for k, v in self.user_names.items()}
+        factor_files = {}
         with open(file_path, "r") as f:
             r = csv.reader(f)
             for row in r:
-                var_name = reverse_user_names[row[0]]
-                self.vars[var_name].set(row[1])
+                try:
+                    var_name = reverse_user_names[row[0]]
+                    self.vars[var_name].set(row[1])
+                except KeyError:
+                    factor_files[row[0]] = row[1]
         self.on_directory_update(self.vars["tmfs_root"].get())
+        # If there are settings available for the factors files then set them
+        try:
+            self.rtf_file.set(factor_files["RTF File"])
+            self.ptf_file.set(factor_files["PTF File"])
+            self.airport_growth.set(factor_files["Airport Growth File"])
+        except:
+            pass
         
     def on_directory_update(self, text):
         self.rtf_file.set(os.path.join(text, "Factors", "RTF.DAT"))
         self.ptf_file.set(os.path.join(text, "Factors", "PTF.DAT"))
+        self.airport_growth.set(os.path.join(text, "Factors", 
+                                             "airport_factors.csv"))
         
 
 if __name__ == "__main__":

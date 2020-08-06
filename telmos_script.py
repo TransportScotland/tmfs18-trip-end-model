@@ -29,14 +29,16 @@ def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year,
         
         telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                     base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
-                    log_func=print_func, just_pivots=just_pivots)
+                    log_func=print_func, just_pivots=just_pivots, 
+                    airport_growth_file=factor_files["airport"])
         if just_pivots is False:
             telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                         base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
                         log_func=print_func)
             
             telmos_addins(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
-                        base_year, base_id, base_scenario, log_func=print_func)
+                        base_year, base_id, base_scenario, log_func=print_func,
+                        rtf_file=factor_files["rtf"], ptf_file=factor_files["ptf"])
     except Exception:
         if thread_queue is not None:
             thread_queue.put(sys.exc_info())
