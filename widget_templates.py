@@ -101,7 +101,8 @@ class LabelledEntry:
     def __init__(self, master, text, var, w=5, lw=20,pack_side="top", 
                  tool_tip_text="", anchor="w", char_limit=None, px=5,
                  py=1, lx=5,ly=5, inter_pack_side="left",
-                 button_pack_side="left", text_style="TLabel"):
+                 button_pack_side="left", text_style="TLabel", 
+                 dir_callback=None):
         self.px = px
         self.main_frame = ttk.Frame(master)
         self.main_frame.pack(side=pack_side,anchor=anchor,pady=py,padx=px)
@@ -113,6 +114,8 @@ class LabelledEntry:
         self.limit = char_limit
         
         okay_func = self.frame.register(self.validate)
+        if dir_callback is not None:
+            self.dir_callback_func = dir_callback
         label = ttk.Label(self.frame, text=text,width=lw, style=text_style)
         label.pack(side=inter_pack_side,anchor=anchor,padx=lx, pady=ly)
         self.entry = ttk.Entry(self.frame, textvariable=var,width=w,
@@ -143,13 +146,15 @@ class LabelledEntry:
     def add_browse(self, working_dir, save=False, types=(("CSV", "*.csv")), extension=".csv"):
         self.dir = tk.StringVar()
         self.dir.set(working_dir)
+        button_frame = ttk.Frame(self.main_frame)
+        button_frame.pack(side=self.button_side, fill="y")
         if save == False:
-            button = ttk.Button(self.frame, text="Browse", command=self.get_file_name)
+            button = ttk.Button(button_frame, text="Browse", command=self.get_file_name)
         elif save == True:
             self.types = types
-            button = ttk.Button(self.frame, text="Browse", 
+            button = ttk.Button(button_frame, text="Browse", 
                                 command=lambda : self.get_save_file_name(extension))
-        button.pack(side="left", anchor="e", padx=self.px)
+        button.pack(side="bottom", anchor="s", padx=self.px)
         
     def get_working_dir(self):
         try:
@@ -160,6 +165,7 @@ class LabelledEntry:
         if working_dir == "":
             return
         self.variable.set(working_dir)
+        self.dir_callback_func(self.variable.get())
         
     def get_save_file_name(self, extension=".xlsx"):
         try:
