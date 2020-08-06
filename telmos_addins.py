@@ -81,9 +81,9 @@ def telmos_addins(delta_root, tmfs_root,
             for i in range(len(addin_array[f_key])):
                 new_pt_arrays.append(addin_array[f_key][i] * 
                          ptf_array.loc[ptf_array.PERIOD==int(tel_year)+2000][
-                                 "PSV"].values[0] / 
+                                 "PT"].values[0] / 
                          ptf_array.loc[ptf_array.PERIOD==int(base_year)+2000][
-                                 "PSV"].values[0])
+                                 "PT"].values[0])
                 new_pt_arrays[i][:low_zones,:low_zones] = (
                         addin_array[f_key][i][:low_zones,:low_zones])
             new_addin_array[f_key] = new_pt_arrays
