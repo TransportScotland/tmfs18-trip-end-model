@@ -189,7 +189,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         df['J'] += 1
         
         df.to_csv(os.path.join(tel_filebase, filename), index=False, 
-                  header=False, float_format="%.3f")
+                  header=False, float_format="%.9f")
         log_func("Goods file saved to %s" % str(os.path.join(tel_filebase, filename)))
             
         # Create Trip End Files
@@ -199,7 +199,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         if te_array.nbytes < 500:
             log_func("Trip End Array is incomplete")
         np.savetxt(os.path.join(tel_filebase, filename.replace(".DAT","TE.DAT")),
-                   te_array, fmt=["%d","%.3f","%.3f"], delimiter=",")
+                   te_array, fmt=["%d","%.9f","%.9f"], delimiter=",")
         log_func("Goods TE saved to %s" % str(os.path.join(tel_filebase,
                                                  filename.replace(".DAT","TE.DAT"))))
             
