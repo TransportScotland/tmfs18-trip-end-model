@@ -16,7 +16,8 @@ from data_functions import odfile_to_matrix, matrix_to_odfile
 
 def telmos_addins(delta_root, tmfs_root, 
                 tel_year, tel_id, tel_scenario,
-                base_year, base_id, base_scenario, log_func=print):
+                base_year, base_id, base_scenario, rtf_file=None,
+                ptf_file=None, log_func=print):
     log_func("Processing Addins...")
     
     #low_zones = 783 ;; This is now increased to 787 to represent the internal 
@@ -29,8 +30,13 @@ def telmos_addins(delta_root, tmfs_root,
     filenames = ["%s%s.DAT" % (period, purpose) for period in periods 
                  for purpose in purposes]
     
-    rtf_file = os.path.join(tmfs_root, "Factors", "RTF.DAT")
-    ptf_file = os.path.join(tmfs_root, "Factors", "PTF.DAT")
+    if rtf_file is None:
+        rtf_file = os.path.join(tmfs_root, "Factors", "RTF.DAT")
+    if ptf_file is None:
+        ptf_file = os.path.join(tmfs_root, "Factors", "PTF.DAT")
+    for factor_file in [rtf_file, ptf_file]:
+        assert os.path.exists(factor_file), \
+                "Addin factor file not found {}".format(factor_file)
     # Load NRTF Array
     rtf_array = pd.read_csv(rtf_file)
     ptf_array = pd.read_csv(ptf_file)
@@ -61,7 +67,7 @@ def telmos_addins(delta_root, tmfs_root,
                     addin_array[f_key][:low_zones,:low_zones])
             
             # Set the output options for non PT files - only one column is used
-            output_array = new_addin_array[f_key].round(3)
+            output_array = new_addin_array[f_key]
             num_columns = 1
             
             # Set the output options for TE.DAT summary files
@@ -70,7 +76,7 @@ def telmos_addins(delta_root, tmfs_root,
                                  new_addin_array[f_key].sum(axis=0)), axis=1)
             
         else:
-            # Loop through the 3 pt matrices and apply psv factor from nrtf array
+            # Loop through the 3 pt matrices and apply factor from ptf array
             new_pt_arrays = []
             for i in range(len(addin_array[f_key])):
                 new_pt_arrays.append(addin_array[f_key][i] * 
@@ -83,7 +89,7 @@ def telmos_addins(delta_root, tmfs_root,
             new_addin_array[f_key] = new_pt_arrays
             
             # Set the output options for PT files - three columns are needed
-            output_array = [x.round(3) for x in new_addin_array[f_key]]
+            output_array = [x for x in new_addin_array[f_key]]
             num_columns = 3
             
             # Set the output options for TE.DAT summary files
@@ -116,7 +122,7 @@ def telmos_addins(delta_root, tmfs_root,
             
         out_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand",
                                 tel_id, filename.replace(".DAT", "TE.DAT"))
-        format_string = ["%d"] + ["%.3f" for _ in range(te_array.shape[1]-1)]
+        format_string = ["%d"] + ["%.9f" for _ in range(te_array.shape[1]-1)]
         np.savetxt(out_file, te_array, delimiter=",", fmt=format_string)
         log_func("Saved Trip Ends to %s" % str(out_file))
                 
