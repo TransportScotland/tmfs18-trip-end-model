@@ -164,17 +164,17 @@ def apply_pivot_files(tod_data, cte_data,
     '''
     sw_array = np.zeros_like(tod_data, dtype="float")
     
-    attr_growth_idxs = [0,2,1,3,0,2,1,3,3]
+    tod_attr_growth_idxs = [0,2,1,3,0,2,1,3,3]
     for j in range(sw_array.shape[0] - 1):
         sw_array[j,:,1:4] = ((cte_data[j,:,1:4] * production_growth[:,(1+8*j):(4+8*j)]) +
                             (cte_data[j,:,4:7] * production_growth[:,(5+8*j):(8+8*j)])) * airport_growth[:,None]
         sw_array[j,:,4] = tod_data[j,:,4] * production_growth[:,(4+8*j)] * airport_growth
-        sw_array[j,:,5] = tod_data[j,:,5] * attraction_growth[:,attr_growth_idxs[j]] * airport_growth
+        sw_array[j,:,5] = tod_data[j,:,5] * attraction_growth[:,tod_attr_growth_idxs[j]] * airport_growth
 
     sw_array[8,:,1:4] = ((cte_data[8,:,1:4] * production_growth[:,(1+8*7):(4+8*7)]) +
                             (cte_data[8,:,4:7] * production_growth[:,(5+8*7):(8+8*7)])) * airport_growth[:,None]
     sw_array[8,:,4] = tod_data[8,:,4] * production_growth[:,(4+8*7)] * airport_growth
-    sw_array[8,:,5] = tod_data[8,:,5] * attraction_growth[:,attr_growth_idxs[7]] * airport_growth
+    sw_array[8,:,5] = tod_data[8,:,5] * attraction_growth[:,tod_attr_growth_idxs[7]] * airport_growth
 
     sw_prod = {}
     sw_attr = {}
@@ -198,7 +198,7 @@ def apply_pivot_files(tod_data, cte_data,
     
     sw_cte_array = np.zeros_like(cte_data, dtype="float")
     prod_col_idxs = np.array([1,2,3,5,6,7,4])
-    attr_growth_idxs = [None, 2, 1, None, None, 2, 1, None, None]
+    cte_attr_growth_idxs = [None, 2, 1, None, None, 2, 1, None, None]
     for j in range(sw_cte_array.shape[0]):
         if j < 8:
             sw_cte_array[j,:,1:8] = (cte_data[j,:,1:8] * 
@@ -210,11 +210,13 @@ def apply_pivot_files(tod_data, cte_data,
                         airport_growth[:,None])
         # These columns do the following
         if j in [0,3,4,7,8]:
-            sw_cte_array[j,:,8] = sw_array[j,:,5]
+            sw_cte_array[j,:,8] = (cte_data[j,:,8] * 
+                        attraction_growth[:,tod_attr_growth_idxs[j]] * 
+                        airport_growth)
         # Otherwise...
         else:
             sw_cte_array[j,:,8] = (cte_data[j,:,8] * 
-                        attraction_growth[:,attr_growth_idxs[j]] * 
+                        attraction_growth[:,cte_attr_growth_idxs[j]] * 
                         airport_growth)
     
     return (sw_array, sw_cte_array)
@@ -308,7 +310,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     log_func("Attraction Factors saved to %s" % str(attr_file))
 
     # Calculate Attraction Growth Factors
-    attr_growth_array = calculate_growth(base=tav_base_array, forecast=attr_factors_array)
+    attr_growth_array = calculate_growth(base=tav_base_array.round(3), forecast=attr_factors_array.round(3))
 
     # # # # # # # # # # # #
     # Production Factors
@@ -364,7 +366,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     ## # # # # # # # # #
     # Production Growth Factors
     # Calculate growth from the base and tel_year pivot files
-    prod_growth_array = calculate_growth(base=tmfs_base_array, forecast=prod_factor_array)
+    prod_growth_array = calculate_growth(base=tmfs_base_array.round(3), forecast=prod_factor_array.round(3))
     log_func("Production Growth Array shape = %s" % str(prod_growth_array.shape))
 
     prefixes = ["AM","IP"]
@@ -409,7 +411,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         airport_growth[factors.index.astype("int")] = factors.values
 
     sw_array, sw_cte_array = apply_pivot_files(tod_data, cte_data, 
-                                             prod_growth_array, attr_growth_array,
+                                             prod_growth_array.round(5), attr_growth_array.round(5),
                                              airport_growth)
 
     log_func("SW Array shape = %s" % str(sw_array.shape))
