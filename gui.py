@@ -24,7 +24,9 @@ REBASING_RUN = 0
 def toggle_widgets(base, target_state):
     try:
         base.configure(state=target_state)
-    except:
+    except tk.TclError:
+        # This is used to catch errors when setting the state on a tkinter 
+        # object where this cannot be done
         pass
     for child_widget in base.winfo_children():
         toggle_widgets(child_widget, target_state)
@@ -85,7 +87,7 @@ class Application:
         sub_text = (
         "This tool uses TELMoS planning data and trip rates from NTEM to apply "
         "growth to the calibrated forecast trip ends that are input to the demand model "
-        "of the Transport Model for Scotland (TMfS)."
+        "of the Transport Model for Scotland (TMfS). "
         "The trip end files produced by this tool should be run through the"
         "Cube smoothing process.")
         sub_title = ttk.Label(title_frame, text=sub_text, wraplength=500)
