@@ -35,8 +35,8 @@ def telmos_addins(delta_root, tmfs_root,
     if ptf_file == "":
         ptf_file = os.path.join(tmfs_root, "Factors", "PTF.DAT")
     for factor_file in [rtf_file, ptf_file]:
-        assert os.path.exists(factor_file), \
-                "Addin factor file not found {}".format(factor_file)
+        if not os.path.isfile(factor_file):
+            raise FileNotFoundError("File does not exist: {}".format(factor_file))
     # Load NRTF Array
     rtf_array = pd.read_csv(rtf_file)
     ptf_array = pd.read_csv(ptf_file)
