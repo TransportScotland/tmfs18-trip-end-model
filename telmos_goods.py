@@ -43,20 +43,16 @@ def load_goods_data(goods_file, hgv_output, lgv_output):
     # TELMoS file zones are numbered with 1-783 as internal, 784-799 external
     #  and 800-803 internal. These should be renumbered to be in line with 
     #  TMfS numbering, inserting 800-803 before external zones
-    zone_map = {x:x for x in range(1,804)}
-    # Internal zones 800-803 renumbered to 784-787
-    internal_renumber = {x:(x-16) for x in range(800, 804)}
-    # External zones 784-799 renumbered to 788-803
-    external_renumber = {x:(x+4) for x in range(784, 800)}
-    zone_map = {**zone_map, **internal_renumber, **external_renumber}
+    # Internal zones 800-803 get renumbered to 784-787, 
+    # and external zones 784-799 renumbered to 788-803
+    zone_map = {
+        z: z if z < 784 else z+4 if z < 800 else z-16 for z in range(1, 804)
+    }
     
-    # Rewrap zone numbers as integers
+    # Rewrap zone numbers as integers and renumber zones
     for df in (hgv_df, lgv_df):
-        df["I"] = df["I"].astype(int)
-        df["J"] = df["J"].astype(int)
-        # Renumber zones
-        df["I"] = df["I"].map(zone_map)
-        df["J"] = df["J"].map(zone_map)
+        for col in ("I", "J"):
+            df[col] = df[col].astype(int).map(zone_map)
         # Sort the renumbered dataframe
         df.sort_values(by=["I", "J"], inplace=True)
         df.reset_index(drop=True, inplace=True)
@@ -174,7 +170,7 @@ def telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         if is_rebasing_run is True:
             new_forecast_array[f_key] = base_goods_array[f_key]
         else:
-            # Road Traaffic Forecast no longer used for external zones - 
+            # Road Traffic Forecast no longer used for external zones - 
             #  TELMoS forecast goods files now include all zones
             new_forecast_array[f_key] = (
                     forecast_goods_array[f_key] * 
