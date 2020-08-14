@@ -35,8 +35,10 @@ def load_goods_data(goods_file, hgv_output, lgv_output):
     hgv_df = pd.DataFrame(hgv_lines, columns=["I", "J", "V"], dtype="float64")
     lgv_df = pd.DataFrame(lgv_lines, columns=["I", "J", "V"], dtype="float64")
     
-    assert len(hgv_df) == 803*803, "HGV file requires 803 * 803 entries"
-    assert len(lgv_df) == 803*803, "LGV file requires 803 * 803 entries"
+    if not len(hgv_df) == 803*803:
+        raise Exception("HGV file requires 803 * 803 entries")
+    if not len(lgv_df) == 803*803:
+        raise Exception("LGV file requires 803 * 803 entries")
     
     # TELMoS file zones are numbered with 1-783 as internal, 784-799 external
     #  and 800-803 internal. These should be renumbered to be in line with 
