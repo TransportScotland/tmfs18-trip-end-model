@@ -16,8 +16,8 @@ from data_functions import odfile_to_matrix, matrix_to_odfile
 
 def telmos_addins(delta_root, tmfs_root, 
                 tel_year, tel_id, tel_scenario,
-                base_year, base_id, base_scenario, rtf_file=None,
-                ptf_file=None, log_func=print):
+                base_year, base_id, base_scenario, rtf_file="",
+                ptf_file="", log_func=print):
     log_func("Processing Addins...")
     
     #low_zones = 783 ;; This is now increased to 787 to represent the internal 
@@ -30,9 +30,9 @@ def telmos_addins(delta_root, tmfs_root,
     filenames = ["%s%s.DAT" % (period, purpose) for period in periods 
                  for purpose in purposes]
     
-    if rtf_file is None:
+    if rtf_file == "":
         rtf_file = os.path.join(tmfs_root, "Factors", "RTF.DAT")
-    if ptf_file is None:
+    if ptf_file == "":
         ptf_file = os.path.join(tmfs_root, "Factors", "PTF.DAT")
     for factor_file in [rtf_file, ptf_file]:
         assert os.path.exists(factor_file), \

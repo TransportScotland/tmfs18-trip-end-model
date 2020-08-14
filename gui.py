@@ -8,6 +8,7 @@ Created on Wed Jul  3 11:35:25 2019
 import tkinter as tk 
 from tkinter import ttk, filedialog
 import csv
+import json
 import os
 import threading
 import queue
@@ -34,11 +35,14 @@ class Application:
     def __init__(self, parent):
         parent.title("TMfS18 Trip End Model")
         self.after = parent.after
-        self.var_names = ["delta_root","tmfs_root", "tel_year", "tel_id", "tel_scenario", 
-                     "base_year", "base_id", "base_scenario"]
+        self.var_names = ["delta_root","tmfs_root", "forecast_year", 
+                          "forecast_id", "forecast_scenario", 
+                     "base_year", "base_id", "base_scenario",
+                     "RTF File", "PTF File", "Airport Growth File"]
         user_friendly_names = ["Delta Root Directory", "TMfS Root Directory",
                                "Forecast Year", "Forecast ID", "Forecast Scenario",
-                               "Base Year", "Base ID", "Base Scenario"]
+                               "Base Year", "Base ID", "Base Scenario",
+                               "RTF File", "PTF File", "Airport Growth File"]
         self.user_names = {var:name for var, name in zip(
                 self.var_names, user_friendly_names)}
         extra_var_names = ["rebasing_run"]
@@ -46,10 +50,8 @@ class Application:
                          'Data/Structure/tmfs_root', 
                          '', '', '', 
                          '18', 'ADL', 'DL', 
+                         "", "", "",
                          REBASING_RUN]
-        self.rtf_file = tk.StringVar()
-        self.ptf_file = tk.StringVar()
-        self.airport_growth = tk.StringVar()
         self.extra_var_defaults = {name:tk.IntVar() for name in extra_var_names}
         self.vars = {name:tk.StringVar() for name in self.var_names}
         self.vars = {**self.vars, **self.extra_var_defaults}
@@ -90,7 +92,7 @@ class Application:
         sub_title.pack(fill="x", padx=5, pady=5)
         github_releases_link = ("https://github.com/TransportScotland/"
                                 "tmfs18-trip-end-model/releases")
-        github_link = ttk.Button(title_frame, text="GitHub Releases", 
+        github_link = ttk.Button(title_frame, text="Check for Newer Releases", 
                                  command=lambda : open_new(
                                          github_releases_link))
         github_link.pack(anchor="w", padx=5, pady=5)
@@ -128,56 +130,30 @@ class Application:
                                   self.vars["tmfs_root"],
                                   pack_side="left", inter_pack_side="top",
                                   w=30, text_style="HEAD.TLabel",
-                                  tool_tip_text=tmfs_dir_tt, 
-                                  dir_callback=self.on_directory_update)
+                                  tool_tip_text=tmfs_dir_tt)
         tmfs_dir.add_directory()
         # Scenario information
         scenario_frame = ttk.Frame(input_frame)
         scenario_frame.pack(fill="x")
-        base_frame = ttk.Frame(scenario_frame, borderwidth=3, relief=tk.GROOVE)
-        base_frame.pack(side="left", fill="x", expand=True)
-        ttk.Label(base_frame, text="Base Scenario", style="HEAD.TLabel").pack()
-        LabelledEntry(base_frame, self.user_names["base_year"].split()[1],
-                      self.vars["base_year"], lw=10, 
-                      w=10, anchor="center", tool_tip_text="Base scenario year")
-        LabelledEntry(base_frame, self.user_names["base_id"].split()[1], 
-                      self.vars["base_id"], lw=10, 
-                      w=10, anchor="center", tool_tip_text="Base scenario ID")
-        LabelledEntry(base_frame, self.user_names["base_scenario"].split()[1],
-                      self.vars["base_scenario"], 
-                      lw=10, w=10, anchor="center", 
-                      tool_tip_text="Base scenario name")
-        tel_frame = ttk.Frame(scenario_frame, borderwidth=3, relief=tk.GROOVE)
-        tel_frame.pack(side="left", fill="x", expand=True)
-        ttk.Label(tel_frame, text="Forecast Scenario", style="HEAD.TLabel").pack()
-        LabelledEntry(tel_frame, self.user_names["tel_year"].split()[1],
-                      self.vars["tel_year"], lw=10, 
-                      w=10, anchor="center", tool_tip_text="Future scenario year")
-        LabelledEntry(tel_frame, self.user_names["tel_id"].split()[1], 
-                      self.vars["tel_id"], lw=10, 
-                      w=10, anchor="center", tool_tip_text="Future scenario ID")
-        LabelledEntry(tel_frame, self.user_names["tel_scenario"].split()[1],
-                      self.vars["tel_scenario"], 
-                      lw=10, w=10, anchor="center", 
-                      tool_tip_text="Future scenario name")
+        for scenario in ["Base", "Forecast"]:
+            frame = ttk.Frame(scenario_frame, borderwidth=3, relief=tk.GROOVE)
+            frame.pack(side="left", fill="x", expand=True)
+            ttk.Label(frame, text="{} Scenario".format(scenario), 
+                      style="HEAD.TLabel").pack()
+            for widget in ["year", "id", "scenario"]:
+                key = "{}_{}".format(scenario.lower(), widget)
+                LabelledEntry(frame, self.user_names[key], self.vars[key], 
+                              lw=20, w=10, anchor="center")
+            
         # Additional options
         
         factor_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
-        rtf_dir = LabelledEntry(factor_frame, "Road Traffic Forecast File", 
-                                  self.rtf_file,
+        for factor_var in ["RTF File", "PTF File", "Airport Growth File"]:
+            widget = LabelledEntry(factor_frame, factor_var, 
+                                  self.vars[factor_var],
                                   pack_side="top", inter_pack_side="left",
                                   w=30, lw=25, text_style="HEAD.TLabel")
-        ptf_dir = LabelledEntry(factor_frame, "PT Forecast File", 
-                                  self.ptf_file,
-                                  pack_side="top", inter_pack_side="left",
-                                  w=30, lw=25, text_style="HEAD.TLabel")
-        air_dir = LabelledEntry(factor_frame, "Airport Growth File", 
-                                  self.airport_growth,
-                                  pack_side="top", inter_pack_side="left",
-                                  w=30, lw=25, text_style="HEAD.TLabel")
-        rtf_dir.add_browse(os.getcwd())
-        ptf_dir.add_browse(os.getcwd())
-        air_dir.add_browse(os.getcwd())
+            widget.add_browse(os.getcwd())
         factor_frame.pack(anchor="w", fill="x", expand=True)
         
         options_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
@@ -203,7 +179,6 @@ class Application:
         self.log = TextLog(log_frame, width=50, height=25)
         self.progress = ttk.Progressbar(log_frame, length=280, 
                                         mode="indeterminate")
-        self.progress.stop()
         self.progress.pack(padx=5, pady=5)
         
         
@@ -221,10 +196,7 @@ class Application:
         self.new_thread = threading.Thread(target=telmos_all,
                                            args=args)
         self.new_thread._kwargs = {"thread_queue":self.thread_queue,
-                                   "print_func":self.log.add_message,
-                                   "factor_files":{"rtf":self.rtf_file.get(), 
-                                                   "ptf":self.ptf_file.get(),
-                                                   "airport":self.airport_growth.get()}}
+                                   "print_func":self.log.add_message}
         self.new_thread.daemon = True
         self.new_thread.start()
         self.progress.start()
@@ -256,23 +228,22 @@ class Application:
         directory.
         """
         args = {self.user_names[x]:self.vars[x].get() for x in self.user_names}
-        factor_files = {"RTF File": self.rtf_file.get(),
-                        "PTF File": self.ptf_file.get(),
-                        "Airport Growth File": self.airport_growth.get()}
-        args = {**args, **factor_files}
         output_dir = os.path.join(self.vars["tmfs_root"].get(), "Runs", 
-                                  self.vars["tel_year"].get(), "Demand", 
-                                  self.vars["tel_id"].get())
+                                  self.vars["forecast_year"].get(), "Demand", 
+                                  self.vars["forecast_id"].get())
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-            
-            self.log.add_message("Created New Directory - {}".format(
-                    output_dir))
-            
-        file_path = os.path.join(output_dir, "settings.txt")
+            output_dir = ""
+        
+        file_path = filedialog.asksaveasfilename(parent=self.main_frame, 
+                                                 title="Save Settings File",
+                                                 defaultextension=".json",
+                                                 filetypes=[("json files", "*.json")],
+                                                 initialdir=output_dir)
+        if file_path == "":
+            return
+        
         with open(file_path, "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerows(args.items())
+            json.dump(args, f)
             
         self.log.add_message("Exported Settings to {}".format(file_path))
     
@@ -284,34 +255,20 @@ class Application:
         """
         file_path = filedialog.askopenfilename(
                 parent=self.main_frame, title="Select Settings File",
-                filetypes=[("text files", "*.txt")])
+                filetypes=[("json files", "*.json")])
         if file_path == "":
             return
         
         reverse_user_names = {v:k for k, v in self.user_names.items()}
-        factor_files = {}
-        with open(file_path, "r") as f:
-            r = csv.reader(f)
-            for row in r:
-                try:
-                    var_name = reverse_user_names[row[0]]
-                    self.vars[var_name].set(row[1])
-                except KeyError:
-                    factor_files[row[0]] = row[1]
-        self.on_directory_update(self.vars["tmfs_root"].get())
-        # If there are settings available for the factors files then set them
-        try:
-            self.rtf_file.set(factor_files["RTF File"])
-            self.ptf_file.set(factor_files["PTF File"])
-            self.airport_growth.set(factor_files["Airport Growth File"])
-        except:
-            pass
         
-    def on_directory_update(self, text):
-        self.rtf_file.set(os.path.join(text, "Factors", "RTF.DAT"))
-        self.ptf_file.set(os.path.join(text, "Factors", "PTF.DAT"))
-        self.airport_growth.set(os.path.join(text, "Factors", 
-                                             "airport_factors.csv"))
+        with open(file_path, "r") as f:
+            settings = json.load(f)
+        for u_key in settings:
+            try:
+                key = reverse_user_names[u_key]
+                self.vars[key].set(settings[u_key])
+            except KeyError as e:
+                self.log.add_message("Setting {} does not exist".format(e))
         
 
 if __name__ == "__main__":
