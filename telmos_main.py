@@ -232,7 +232,7 @@ def save_trip_end_files(file_names, trip_ends, base_path, precision):
 
 def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
-                log_func=print, just_pivots=False, airport_growth_file=None):
+                log_func=print, just_pivots=False, airport_growth_file=""):
     '''
     Applies growth to base year trip end files for input into the second stage 
     of the TMfS18 trip end model
@@ -405,7 +405,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         #   New method for airport growth >= TMfS18 (growth varies according to DfT 2017 aviation forecast)
         # now reads in a file from "Factors" that contains the expected growth 
         # from 2017
-        if airport_growth_file is None:
+        if airport_growth_file == "":
             airport_growth_file = os.path.join(tmfs_root, "Factors", 
                                            "airport_factors.csv")
         factors = pd.read_csv(airport_growth_file, index_col="Year")

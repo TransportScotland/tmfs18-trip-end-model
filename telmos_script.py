@@ -15,8 +15,10 @@ from telmos_goods import telmos_goods
 from telmos_addins import telmos_addins
 
 def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year, 
-         base_id, base_scenario, rebasing_run, factor_files=None,
-         thread_queue=None, print_func=print, just_pivots=False):
+         base_id, base_scenario, rtf_file, ptf_file, airport_file,
+         rebasing_run, thread_queue=None, print_func=print, just_pivots=False):
+    
+    factor_files = dict(rtf=rtf_file, ptf=ptf_file, airport=airport_file)
     
     if print_func is None:
         print_func = print
