@@ -408,6 +408,9 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         if airport_growth_file == "":
             airport_growth_file = os.path.join(tmfs_root, "Factors", 
                                            "airport_factors.csv")
+        if not os.path.isfile(airport_growth_file):
+            raise FileNotFoundError("File does not exist: {}".format(
+                    airport_growth_file))
         factors = pd.read_csv(airport_growth_file, index_col="Year")
         factors = factors.loc[int(tel_year) + 2000]/factors.loc[int(base_year) + 2000]
         airport_growth[factors.index.astype("int")] = factors.values
