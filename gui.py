@@ -150,11 +150,14 @@ class Application:
         # Additional options
         
         factor_frame = ttk.Frame(input_frame, borderwidth=3, relief=tk.GROOVE)
+        # Add text to explain that these are optional files
+        ttk.Label(factor_frame, text="Factor Files (Optional)", 
+                  style="HEAD.TLabel").pack(anchor="w", padx=10)
         for factor_var in ["RTF File", "PTF File", "Airport Growth File"]:
-            widget = LabelledEntry(factor_frame, factor_var, 
+            widget = LabelledEntry(factor_frame, self.user_names[factor_var], 
                                   self.vars[factor_var],
                                   pack_side="top", inter_pack_side="left",
-                                  w=30, lw=25, text_style="HEAD.TLabel")
+                                  w=30, lw=30)
             widget.add_browse(os.getcwd())
         factor_frame.pack(anchor="w", fill="x", expand=True)
         
@@ -258,6 +261,7 @@ class Application:
         file_path = filedialog.askopenfilename(
             parent=self.main_frame, title="Select Settings File",
             filetypes=[("JSON files (*.json)", "*.json"), ("All files", "*.*")]
+        )
         if file_path == "":
             return
         
