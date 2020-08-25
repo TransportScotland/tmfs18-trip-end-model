@@ -236,11 +236,11 @@ class Application:
         if not os.path.exists(output_dir):
             output_dir = ""
         
-        file_path = filedialog.asksaveasfilename(parent=self.main_frame, 
-                                                 title="Save Settings File",
-                                                 defaultextension=".json",
-                                                 filetypes=[("json files", "*.json")],
-                                                 initialdir=output_dir)
+        file_path = filedialog.asksaveasfilename(
+            parent=self.main_frame, title="Save Settings File",
+            defaultextension=".json", initialdir=output_dir,
+            filetypes=[("JSON files (*.json)", "*.json"), ("All files", "*.*")]
+        )     
         if file_path == "":
             return
         
@@ -256,8 +256,8 @@ class Application:
         settings file.
         """
         file_path = filedialog.askopenfilename(
-                parent=self.main_frame, title="Select Settings File",
-                filetypes=[("json files", "*.json")])
+            parent=self.main_frame, title="Select Settings File",
+            filetypes=[("JSON files (*.json)", "*.json"), ("All files", "*.*")]
         if file_path == "":
             return
         
