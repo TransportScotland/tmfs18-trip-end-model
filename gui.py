@@ -40,11 +40,13 @@ class Application:
         self.var_names = ["delta_root","tmfs_root", "forecast_year", 
                           "forecast_id", "forecast_scenario", 
                      "base_year", "base_id", "base_scenario",
-                     "RTF File", "PTF File", "Airport Growth File"]
+                     "RTF File", "PTF File", "Airport Growth File",
+                     "home_working"]
         user_friendly_names = ["Delta Root Directory", "TMfS Root Directory",
                                "Forecast Year", "Forecast ID", "Forecast Scenario",
                                "Base Year", "Base ID", "Base Scenario",
-                               "RTF File", "PTF File", "Airport Growth File"]
+                               "RTF File", "PTF File", "Airport Growth File",
+                               "Integrate Home Working"]
         self.user_names = {var:name for var, name in zip(
                 self.var_names, user_friendly_names)}
         extra_var_names = ["rebasing_run"]
@@ -153,6 +155,15 @@ class Application:
         # Add text to explain that these are optional files
         ttk.Label(factor_frame, text="Factor Files (Optional)", 
                   style="HEAD.TLabel").pack(anchor="w", padx=10)
+        # Add tickbox for home working integration
+        widget = ttk.Checkbutton(
+            factor_frame,
+            text=self.user_names["home_working"],
+            variable=self.vars["home_working"],
+            onvalue="1",
+            offvalue="0"
+            )
+        widget.pack(side="top", anchor="w", padx=10)
         for factor_var in ["RTF File", "PTF File", "Airport Growth File"]:
             widget = LabelledEntry(factor_frame, self.user_names[factor_var], 
                                   self.vars[factor_var],
@@ -189,11 +200,15 @@ class Application:
         
         
     def callback_run_script(self):
-        args = [x.get() for x in self.vars.values()]
-        for i in range(len(args)):
-            if args[i] == 0 or args[i] == 1:
-                args[i] = bool(args[i])
-        args = tuple(args)
+        args = {k: x.get() for k, x in self.vars.items()}
+        
+        boolean_args = ["rebasing_run", "home_working"]
+        
+        for var_name in args:
+            if var_name in boolean_args:
+                args[var_name] = bool(int(args[var_name]))
+        args = tuple(args.values())
+        print(args)
         
         toggle_widgets(self.main_frame, "disabled")
         
