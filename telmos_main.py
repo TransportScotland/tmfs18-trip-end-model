@@ -6,8 +6,9 @@
 Conversion of TELMOS2_v2.2 vb scripts
 """
 
-from itertools import product
 import os
+from itertools import product
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -15,26 +16,72 @@ import pandas as pd
 MALE_STUDENT_FACTOR = 0.2794
 FEMALE_STUDENT_FACTOR = 0.2453
 
+# Define the values used when reading in trip rates
+TR_PURPOSES = ["HBW", "HBO", "HBE", "HBS"]
+TR_MODES = ["Car", "PT"]
+TR_PERIODS = ["AM", "IP", "PM"]
+TR_AREA_TYPES = list(range(3, 9))
+
 def read_trip_rates(factors_dir, just_pivots):
     '''
     Loads the production trip rate files into a numpy array
     '''
-    purposes = ["HBW", "HBO", "HBE", "HBS"]
-    modes = ["Car", "PT"]
-    periods = ["AM", "IP", "PM"]
+    
+    periods = TR_PERIODS
+    
     if just_pivots is True:
         periods.append("OP")
-    suffixes = range(3, 9)
     
     sr_array = []
-    for suffix in suffixes:
+    for area_type in TR_AREA_TYPES:
         data = []
-        for period, purpose, mode in product(periods, purposes, modes):
-            file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, suffix)
+        segmentations = product(periods, TR_PURPOSES, TR_MODES)
+        for period, purpose, mode in segmentations:
+            file_name = "%s_%s_%s_%s.txt" % (purpose, mode, period, area_type)
             factor_file = os.path.join(factors_dir, file_name)
             data.append(np.loadtxt(factor_file))
         sr_array.append(data)
     return np.asarray(sr_array)
+
+
+def read_trip_rates_home_working(factors_dir: str,
+                                 just_pivots: bool,
+                                 wah_tag: str = "WAH"
+                                 ) -> np.array:
+
+    # Add off-peak to the period list if required
+    periods = TR_PERIODS
+    if just_pivots is True:
+        periods.append("OP")
+
+    file_base = "{purp}_{mode}_{period}_{area}_{wah_tag}.txt"
+
+    # Setup an empty list to store the trip rates
+    trip_rates = []
+
+    # Loop through all available segmentation for the trip rates
+    for area_type in TR_AREA_TYPES:
+
+        data = []
+        segmentations = product(periods, TR_PURPOSES, TR_MODES)
+
+        for period, purpose, mode in segmentations:
+
+            file_name = file_base.format(
+                purp=purpose,
+                mode=mode,
+                period=period,
+                area=area_type,
+                wah_tag=wah_tag
+            )
+            file_path = os.path.join(factors_dir, file_name)
+
+            data.append(np.loadtxt(file_path))
+
+        trip_rates.append(data)
+
+    return np.asarray(trip_rates)
+
 
 def load_cte_tod_files(tod_files, cte_files, file_base):
     tod_data = []
@@ -55,6 +102,30 @@ def load_cte_tod_files(tod_files, cte_files, file_base):
         cte_data.append(np.loadtxt(os.path.join(file_base, c_file_name),
                                    delimiter=","))
     return (np.asarray(tod_data), np.asarray(cte_data))
+
+
+def student_factor_adjustment(population_data: np.array) -> np.array:
+    """Split columns in the tmfs population data using student factors.
+    Also removes unnecessary columns.
+
+    Args:
+        population_data (np.array): Numpy array of population data, extracted 
+        from the DELTA directory.
+
+    Returns:
+        np.array: The adjusted array containing non-working split by student/
+        non-students
+    """
+    adjusted_arr = np.copy(population_data)
+
+    adjusted_arr[:, :3] = adjusted_arr[:, 2:5]
+    adjusted_arr[:, 3] = adjusted_arr[:, 7] * MALE_STUDENT_FACTOR
+    adjusted_arr[:, 4] = adjusted_arr[:, 8] * FEMALE_STUDENT_FACTOR
+    adjusted_arr[:, 7] = adjusted_arr[:, 7] * (1 - MALE_STUDENT_FACTOR)
+    adjusted_arr[:, 8] = adjusted_arr[:, 8] * (1 - FEMALE_STUDENT_FACTOR)
+
+    return adjusted_arr
+
 
 def create_attraction_pivot(planning_data, attraction_trip_rates):
     ''' 
@@ -232,7 +303,8 @@ def save_trip_end_files(file_names, trip_ends, base_path, precision):
 
 def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                 base_year, base_id, base_scenario, is_rebasing_run=True,
-                log_func=print, just_pivots=False, airport_growth_file=""):
+                log_func=print, just_pivots=False, airport_growth_file="",
+                integrate_home_working=False):
     '''
     Applies growth to base year trip end files for input into the second stage 
     of the TMfS18 trip end model
@@ -241,19 +313,51 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     
     # Read in the trip rate matrices into multi-dim array
     factors_base = os.path.join(tmfs_root, "Factors")
-    p_trip_rate_array = read_trip_rates(factors_base, just_pivots)
+    trip_rate_message = "Loaded {} Trip Rate Factors with shape: {}"
+    if integrate_home_working:
+        p_trip_rate_array = {"WAH": None, "WBC": None}
+        for work_type in p_trip_rate_array:
+            p_trip_rate_array[work_type] = read_trip_rates_home_working(
+                factors_base,
+                just_pivots=just_pivots,
+                wah_tag=work_type
+            )
+            log_func(
+                trip_rate_message.format(work_type, 
+                                         p_trip_rate_array[work_type].shape)
+            )
+    else:
+        p_trip_rate_array = read_trip_rates(factors_base, just_pivots)
+        log_func(trip_rate_message.format("all", p_trip_rate_array.shape))
     
     # Load in the student factors and attraction factors separately
     attraction_file = "Attraction Factors.txt"
     attraction_factors = np.loadtxt(os.path.join(factors_base, attraction_file))
     
-    log_func("Loaded SR Factors with shape: %s" % str(p_trip_rate_array.shape)) # old shape was (24, 6, 8, 11)
     log_func("Loaded Attraction Factors with shape: %s" % str(attraction_factors.shape))
     
     # Read in planning data and pivoting files
     # planning data
-    tel_tmfs_file = os.path.join(delta_root, tel_scenario, 
-                                 "tmfs%s%s.csv" % (tel_year, tel_scenario.lower()))
+    
+    # If using home working split inputs, create 2 tmfs_array objects, one
+    # for each split. These can be combined in create_production_pivot()
+    if integrate_home_working:
+        tel_scenario_tmfs = "{}_hw".format(tel_scenario.lower())
+        # Need to load in extra columns for the working at home split
+        use_cols_tmfs = range(2, 15)
+        # Define how the array will be split - take 2 sets of columns
+        split_tmfs = {"WAH": [0, 1, 2, 3, 4, 5, 6, 11, 12, 13, 14],
+                      "WBC": [0, 1, 2, 7, 8, 9, 10, 11, 12, 13, 14]}
+    else:
+        tel_scenario_tmfs = tel_scenario.lower()
+        use_cols_tmfs = range(2, 11)
+        split_tmfs = None
+
+    tel_tmfs_file = os.path.join(
+        delta_root,
+        tel_scenario,
+        "tmfs%s%s.csv" % (tel_year, tel_scenario_tmfs)
+    )
     tel_tav_file = os.path.join(delta_root, tel_scenario, 
                                  "tav_%s%s.csv" % (tel_year, tel_scenario.lower()))
     # base pivoting files
@@ -271,12 +375,26 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     tav_array = np.loadtxt(tel_tav_file, skiprows=1, delimiter=",")
     count_tav = tav_array.shape[0]
     tmfs_array = np.loadtxt(tel_tmfs_file, skiprows=1, delimiter=",",
-                            usecols=range(2,11))
+                            usecols=use_cols_tmfs)
     tmfs_array = np.concatenate((np.zeros_like(tmfs_array[:,[0,1]]), tmfs_array), axis=1)
-    # Previous version swaps columns 4 and 5 of the planning data
-    # to be in line with the tmfs07 version expects
-    tmfs_array[:,4], tmfs_array[:,5] = tmfs_array[:,5], tmfs_array[:,4].copy()
     count_tmfs = tmfs_array.shape[0]
+
+    # Extract the columns required for the 2 versions of tmfs_array if required
+    if split_tmfs:
+        tmfs_array = {
+            work_type: tmfs_array[:, split_cols] 
+            for work_type, split_cols in split_tmfs.items()
+        }
+        for work_type in tmfs_array:
+            tmfs_array[work_type][:,4], tmfs_array[work_type][:,5] = (
+                tmfs_array[work_type][:,5], tmfs_array[work_type][:,4].copy()
+            )
+    else:
+        # Previous version swaps columns 4 and 5 of the planning data
+        # to be in line with the tmfs07 version expects
+        tmfs_array[:,4], tmfs_array[:,5] = (
+            tmfs_array[:,5], tmfs_array[:,4].copy()
+        )
     
     log_func("TAV Count: %d" % count_tav)
     log_func("I Count: %d" % count_i)
@@ -288,17 +406,30 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # # # # # # # # # # # # # # # #
 
     # Rearrange and account for students
-    tmfs_adj_array = np.copy(tmfs_array)
-    tmfs_adj_array[:,:3] = tmfs_adj_array[:,2:5]
-    tmfs_adj_array[:,3] = tmfs_adj_array[:,7] * MALE_STUDENT_FACTOR
-    tmfs_adj_array[:,4] = tmfs_adj_array[:,8] * FEMALE_STUDENT_FACTOR
-    tmfs_adj_array[:,7] = tmfs_adj_array[:,7] * (1 - MALE_STUDENT_FACTOR)
-    tmfs_adj_array[:,8] = tmfs_adj_array[:,8] * (1 - FEMALE_STUDENT_FACTOR)
+    if split_tmfs:
+        tmfs_adj_array = {}
+        # Adjust each array individually
+        for work_type in tmfs_array:
+            tmfs_adj_array[work_type] = student_factor_adjustment(
+                tmfs_array[work_type]
+            )
+            tmfs_array_shape = tmfs_array[work_type].shape
+            tmfs_adj_array_shape = tmfs_adj_array[work_type].shape
+    else:
+        tmfs_adj_array = student_factor_adjustment(tmfs_array)
+        tmfs_array_shape = tmfs_array.shape
+        tmfs_adj_array_shape = tmfs_adj_array.shape
+
+    # tmfs_adj_array = np.copy(tmfs_array)
+    # tmfs_adj_array[:,:3] = tmfs_adj_array[:,2:5]
+    # tmfs_adj_array[:,3] = tmfs_adj_array[:,7] * MALE_STUDENT_FACTOR
+    # tmfs_adj_array[:,4] = tmfs_adj_array[:,8] * FEMALE_STUDENT_FACTOR
+    # tmfs_adj_array[:,7] = tmfs_adj_array[:,7] * (1 - MALE_STUDENT_FACTOR)
+    # tmfs_adj_array[:,8] = tmfs_adj_array[:,8] * (1 - FEMALE_STUDENT_FACTOR)
 
     log_func("TAV Base Array shape = %s" % str(tav_base_array.shape))
-    log_func("TMFS Array shape = %s" % str(tmfs_array.shape))
-    log_func("TMFS Adj Array shape = %s" % str(tmfs_adj_array.shape))
-
+    log_func("TMFS Array shape = {}".format(tmfs_array_shape))
+    log_func("TMFS Adj Array shape = {}".format(tmfs_adj_array_shape))
     # Attraction Factors
     # Apply the attraction factors to the tav array planning data
     attr_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id,
@@ -324,11 +455,50 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     check_file = os.path.join(tmfs_root, "Runs", tel_year,
                               "Demand", tel_id, "check2.csv")
     
+    # Create the production pivot data - multiplying population/planning data 
+    # by the trip rates
     
-    prod_factor_array = create_production_pivot(tmfs_adj_array, p_trip_rate_array,
-                                                area_corres_array, check_file,
-                                                count_tav, tmfs_base_array.shape,
-                                                just_pivots)
+    # For home working split data, we need to combine the resulting pivot data
+    if integrate_home_working:
+        prod_factor_array = None
+        for work_type in tmfs_adj_array:
+            # Check that the work type is valid (Should be WAH or WBC)
+            if work_type not in p_trip_rate_array:
+                raise ValueError("Error: Could not find split in Trip Rates")
+        
+            # Pick out the columns that have not been split
+            split_cols = [1, 2, 5, 6]
+            # Halve all other columns to prevent double counts
+            split_pop_data = tmfs_adj_array[work_type].copy()
+            non_split_cols = [x for x in range(split_pop_data.shape[1])
+                              if x not in split_cols]
+            split_pop_data[:, non_split_cols] /= 2
+        
+            temp_prod_factors = create_production_pivot(
+                planning_data=split_pop_data,
+                production_trip_rates=p_trip_rate_array[work_type],
+                area_correspondence=area_corres_array,
+                check_file=check_file,
+                count_tav=count_tav,
+                output_shape=tmfs_base_array.shape,
+                just_pivots=just_pivots
+            )
+            
+            if prod_factor_array is None:
+                prod_factor_array = temp_prod_factors
+            else:
+                prod_factor_array += temp_prod_factors
+    # Otherwise, can just use the output data
+    else:
+        prod_factor_array = create_production_pivot(
+            tmfs_adj_array,
+            p_trip_rate_array,
+            area_corres_array,
+            check_file,
+            count_tav,
+            tmfs_base_array.shape,
+            just_pivots
+        )
     
     
     prod_factor_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id, "tmfs%s_%s.csv" % (tel_year, tel_id))
