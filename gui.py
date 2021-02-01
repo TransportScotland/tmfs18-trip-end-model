@@ -41,12 +41,13 @@ class Application:
                           "forecast_id", "forecast_scenario", 
                      "base_year", "base_id", "base_scenario",
                      "RTF File", "PTF File", "Airport Growth File",
-                     "home_working"]
+                     "home_working", "old_tr_fmt"]
         user_friendly_names = ["Delta Root Directory", "TMfS Root Directory",
                                "Forecast Year", "Forecast ID", "Forecast Scenario",
                                "Base Year", "Base ID", "Base Scenario",
                                "RTF File", "PTF File", "Airport Growth File",
-                               "Integrate Home Working"]
+                               "Integrate Home Working",
+                               "Use Old Trip Rate Format (Legacy)"]
         self.user_names = {var:name for var, name in zip(
                 self.var_names, user_friendly_names)}
         extra_var_names = ["rebasing_run"]
@@ -164,6 +165,16 @@ class Application:
             offvalue="0"
             )
         widget.pack(side="top", anchor="w", padx=10)
+        # Add tickbox for using old style of trip rates
+        widget = ttk.Checkbutton(
+            factor_frame,
+            text=self.user_names["old_tr_fmt"],
+            variable=self.vars["old_tr_fmt"],
+            onvalue="1",
+            offvalue="0"
+            )
+        widget.pack(side="top", anchor="w", padx=10)
+
         for factor_var in ["RTF File", "PTF File", "Airport Growth File"]:
             widget = LabelledEntry(factor_frame, self.user_names[factor_var], 
                                   self.vars[factor_var],
@@ -202,7 +213,7 @@ class Application:
     def callback_run_script(self):
         args = {k: x.get() for k, x in self.vars.items()}
         
-        boolean_args = ["rebasing_run", "home_working"]
+        boolean_args = ["rebasing_run", "home_working", "old_tr_fmt"]
         
         for var_name in args:
             if var_name in boolean_args:

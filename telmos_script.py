@@ -16,7 +16,7 @@ from telmos_addins import telmos_addins
 
 def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year, 
          base_id, base_scenario, rtf_file, ptf_file, airport_file, 
-         integrate_home_working,
+         integrate_home_working, old_tr_fmt,
          rebasing_run, thread_queue=None, 
          print_func=print, just_pivots=False):
     
@@ -36,7 +36,8 @@ def telmos_all(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, base_year,
                     base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
                     integrate_home_working=integrate_home_working,
                     log_func=print_func, just_pivots=just_pivots, 
-                    airport_growth_file=factor_files["airport"])
+                    airport_growth_file=factor_files["airport"],
+                    legacy_trip_rates=old_tr_fmt)
         if just_pivots is False:
             telmos_goods(delta_root, tmfs_root, tel_year, tel_id, tel_scenario, 
                         base_year, base_id, base_scenario, is_rebasing_run=rebasing_run,
