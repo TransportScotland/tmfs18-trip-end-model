@@ -13,26 +13,11 @@ import numpy as np
 import pandas as pd
 
 
-def save_output(arr: np.array,
-                out_path: str = None,
-                combined_arr: List[np.array] = None,
-                combined_args: List[str] = None
-                ) -> list:
-
-    if combined_arr is not None:
-        ret_arr = combined_arr + [combined_args + [arr]]
-        return ret_arr
-
-    np.savetxt(out_path, arr, fmt=FLOAT_FORMAT)
-
-    return None
-
-
 # PARAMETERS
 BASE_DIR = r"C:\Users\japeach\Documents\41456 - LATIS Scoping\Trip End Model"
 WORKING_DIR = os.path.join(BASE_DIR, "Home Working", "Trip Rates")
 INPUT_DIR = os.path.join(WORKING_DIR, "Input")
-TRIP_RATE_NAME = "210129 Order Test"
+TRIP_RATE_NAME = "210201 Combined Split Work Type"
 OUTPUT_DIR = os.path.join(WORKING_DIR, "Output", TRIP_RATE_NAME)
 
 if not os.path.isdir(OUTPUT_DIR):
@@ -52,7 +37,44 @@ FLOAT_PRECISION = 3
 FLOAT_FORMAT = f"%.{FLOAT_PRECISION}f"
 
 # FLAG if single output file is required
-COMBINE_OUTPUT = False
+COMBINE_OUTPUT = True
+
+# Column ordering - as expected by trip end model
+TRIP_RATE_COL_ORDER = [0, 1, 6, 3, 8, 2, 7, 4, 9, 5, 10]
+
+
+def save_output(arr: np.array,
+                out_path: str = None,
+                combined_arr: List[np.array] = None,
+                combined_args: List[str] = None
+                ) -> list:
+
+    if combined_arr is not None:
+        ret_arr = combined_arr + [combined_args + [arr]]
+        return ret_arr
+
+    np.savetxt(out_path, arr, fmt=FLOAT_FORMAT)
+
+    return None
+
+
+def convert_rates_format(initial_array: np.array,
+                         column_order: List[int] = TRIP_RATE_COL_ORDER,
+                         direction: str = "to_wide",
+                         sort_long: bool = False
+                         ) -> np.array:
+
+    if direction == "to_wide":
+        arr = initial_array.reshape((8, 11), order="F")[:, column_order]
+    elif direction == "to_long":
+        arr = initial_array.reshape(88)
+        if sort_long:
+            arr = np.sort(arr)
+    else:
+        raise ValueError("direction must be 'to_wide' or 'to_long'!")
+
+    return arr
+
 
 # Build Paths and load beta and rho files
 beta_path = os.path.join(INPUT_DIR, "IBETAhsr_NTEM7.2_NEW.csv")
@@ -63,6 +85,7 @@ b = pd.read_csv(beta_path)
 r = pd.read_csv(rho_path)
 
 # Fetch the lookup file for traveller type definitions if required
+s_lookup = None
 if COMBINE_OUTPUT:
     s_lookup_path = os.path.join(INPUT_DIR, "DefTraveller.csv")
     s_lookup = pd.read_csv(s_lookup_path)
@@ -122,7 +145,11 @@ for purpose, mode, period, area in segment_iter:
         & (g_rates["PURPOSE"] == purpose)
     ][col].to_numpy()
 
-    arr = arr.reshape((8, 11), order="F")[:, col_order]
+    arr = convert_rates_format(
+        arr,
+        direction="to_wide"
+    )
+    # arr = arr.reshape((8, 11), order="F")[:, col_order]
 
     if SPLIT_HOME_WORKING:
         for work_type in ["WAH", "WBC"]:
@@ -158,7 +185,11 @@ if DEBUG_MODE is True:
 if COMBINE_OUTPUT:
     # Retrieve the order of the trip rate traveller types (88 traveller types)
     reshaped_s = np.arange(1, 89, step=1)
-    reshaped_s = reshaped_s.reshape((8, 11), order="F")[:, col_order]
+    reshaped_s = convert_rates_format(
+        reshaped_s,
+        direction="to_wide"
+    )
+    # reshaped_s = reshaped_s.reshape((8, 11), order="F")[:, col_order]
 
     # Loop through and unstack each matrix
     combined_df = pd.DataFrame()
@@ -169,8 +200,16 @@ if COMBINE_OUTPUT:
         arr = matrix_details.pop(-1)
         df = pd.DataFrame([matrix_details], index=range(88), columns=columns)
 
-        df["traveller_type"] = reshaped_s.reshape(88)
-        df["trip_rate"] = arr.reshape(88)
+        df["traveller_type"] = convert_rates_format(
+            reshaped_s,
+            direction="to_long",
+            sort_long=False
+        )
+        df["trip_rate"] = convert_rates_format(
+            arr,
+            direction="to_long",
+            sort_long=False
+        )
 
         if combined_df.empty:
             combined_df = df
