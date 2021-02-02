@@ -8,8 +8,7 @@ Conversion of TELMOS2_v2.2 vb scripts
 
 import os
 from itertools import product
-from typing import Dict
-from typing import Union
+from typing import Callable, Dict, List, Tuple, Union
 from collections import defaultdict
 
 import numpy as np
@@ -32,12 +31,12 @@ def read_trip_rates(factors_dir, just_pivots):
     '''
     Loads the production trip rate files into a numpy array
     '''
-    
+
     periods = TR_PERIODS
-    
+
     if just_pivots is True:
         periods.append("OP")
-    
+
     sr_array = []
     for area_type in TR_AREA_TYPES:
         data = []
@@ -174,8 +173,8 @@ def load_cte_tod_files(tod_files, cte_files, file_base):
     tod_data = []
     cte_data = []
     for t_file, c_file in zip(tod_files, cte_files):
-        # TMfS14 had a long-distance module that required some CTE/TOD files to have
-        # _All appended to the end. This can now be removed if needed.
+        # TMfS14 had a long-distance module that required some CTE/TOD files
+        # to have _All appended to the end. This can now be removed if needed.
         t_file_name = (
             t_file if os.path.isfile(os.path.join(file_base, t_file))
             else t_file.upper().replace("_ALL", "")
@@ -196,7 +195,7 @@ def student_factor_adjustment(population_data: np.array) -> np.array:
     Also removes unnecessary columns.
 
     Args:
-        population_data (np.array): Numpy array of population data, extracted 
+        population_data (np.array): Numpy array of population data, extracted
         from the DELTA directory.
 
     Returns:
@@ -214,96 +213,205 @@ def student_factor_adjustment(population_data: np.array) -> np.array:
     return adjusted_arr
 
 
-def create_attraction_pivot(planning_data, attraction_trip_rates):
-    ''' 
-    Multiplies the planning data and the attraction trip rates
-    '''
-    # Columns are: Work, Employment, Other, Education
-    attr_factors_array = np.ones((planning_data.shape[0], 4),dtype="float32")
-    attr_factors_array[:,0] = planning_data[:,2] * attraction_trip_rates[0, 0]
-    attr_factors_array[:,1] = planning_data[:,[1,3,4,5,6,7,8]].sum(axis=1) * attraction_trip_rates[2,1]
-    attr_factors_array[:,2] = (planning_data[:,[4,8,1,3]] * 
-                      attraction_trip_rates[[6,7,1,12],[3,4,8,9]]).sum(axis=1)
-    attr_factors_array[:,3] = planning_data[:,7] * attraction_trip_rates[2,2]
+def create_attraction_pivot(planning_data: np.array,
+                            attraction_trip_rates: np.array
+                            ) -> np.array:
+    """Multiples the employment planning data and attraction trip rates to
+    produce synthetic attractions
+
+    Args:
+        planning_data (np.array): Planning data from land use model, shape is
+        (num of zones, 8 columns)
+        attraction_trip_rates (np.array): Attraction trip rates, containing
+        15 attraction sites and 9 purposes
+
+    Returns:
+        np.array: Attractions pivoting file, containing 4 purpose columns
+    """
+    # Purpose Columns are: Work, Employment, Other, Education - All HB
+    attr_factors_array = np.ones((planning_data.shape[0], 4), dtype="float32")
+
+    # Create Work column
+    # planning columns - employment
+    work = planning_data[:, 2]
+    # Extract the single attraction factor (HB Work, All Jobs)
+    work_factor = attraction_trip_rates[0, 0]
+    attr_factors_array[:, 0] = work * work_factor
+
+    # Create Business/ In Employment column
+    # planning columns - households, agricul and fishing, retail,
+    # hospitality, local financial, education, health & sociol serv
+    employment = planning_data[:, [1, 3, 4, 5, 6, 7, 8]].sum(axis=1)
+    # Extract the single attraction factor (HB Emp Business, All)
+    # Note that this expects the same factor for e.g. schools, Hotels,
+    # Retail, etc. - TODO: could use a combination instead
+    employment_factor = attraction_trip_rates[2, 1]
+    attr_factors_array[:, 1] = employment * employment_factor
+
+    # Create Other column
+    # planning columns - retail, health & socio serv, households,
+    # agricul and fishing
+    other = planning_data[:, [4, 8, 1, 3]]
+    # Extract attraction factors -
+    # [(HB Shopping, Retail),
+    # (HB Personal Business, Health/Medical),
+    # (HB Visiting, Households),
+    # (HB Holiday, Agriculture/Fishing)]
+    other_factor = attraction_trip_rates[[6, 7, 1, 12], [3, 4, 8, 9]]
+    attr_factors_array[:, 2] = (other * other_factor).sum(axis=1)
+
+    # Create Education column
+    # planning columns - education
+    education = planning_data[:, 7]
+    # Extract attraction factor - (HB Education, Schools).
+    # Note that this expects the same factor for e.g. schools,
+    # higher education, and adult education
+    education_factor = attraction_trip_rates[2, 2]
+    attr_factors_array[:, 3] = education * education_factor
+
     return attr_factors_array
 
-def create_production_pivot(planning_data, production_trip_rates, area_correspondence,
-                            check_file, count_tav, output_shape, just_pivots):
-    ''' 
-    Multiplies the planning data and the production trip rates
-    
-    planning_data : adjusted planning data (tmfsxxxx.csv)
-    production_trip_rates : array of all production trip rates (p_trip_rate_array)
-    area_correspondence : array containing urban/rural classification of zones 
-    check_file : output path for check2.csv file
-    count_tav : number of internal zones
-    output_shape : shape of pivot file (same as base pivot file)
-    just_pivots : bool : if just the pivots should be output (false)
-    '''
-    sr_prod_array = np.zeros((24, planning_data.shape[0], 11))
+
+def create_production_pivot(planning_data: np.array,
+                            production_trip_rates: np.array,
+                            area_correspondence: np.array,
+                            output_shape: Tuple[int, int],
+                            just_pivots: bool,
+                            check_file: str = None,
+                            int_zones: int = None
+                            ) -> np.array:
+    """Created the synthetic productions pivot file. Multiplies planning data
+    by relevant trip rates, based on : area type, period/purpose/mode,
+    household/person type.
+    Aggregates the household/person types to the 4 household types required
+
+    Args:
+        planning_data (np.array): Population split by employment type,
+        male/female, and age
+        production_trip_rates (np.array): Trip rates read from read_trip_rates
+        functions
+        area_correspondence (np.array): Area definition for each model zone
+        output_shape (Tuple[int, int]): Shape required by the output array
+        just_pivots (bool): If all time periods should be used
+        check_file (str, optional): Output path of optional check file.
+        Defaults to None.
+        int_zones (int, optional): Number of internal zones. Defaults to None.
+
+    Returns:
+        np.array: Synthetic productions used in pivoting. Saved as tmfsXXXX.csv
+    """
+
+    split_prod_array = np.zeros((24, planning_data.shape[0], 11))
     if just_pivots is True:
-        sr_prod_array = np.zeros((32, planning_data.shape[0], 11))
-        
-    with open(check_file, "w", newline="") as check:
-        trr = 0
-        for k in range(sr_prod_array.shape[0]):
-            for j in range(sr_prod_array.shape[2]):
-                for i in range(sr_prod_array.shape[1]-1):
-                    sr_prod_array[k, i, j] = (planning_data[i, j] * 
-                                 production_trip_rates[area_correspondence[i]-3, k, trr, j])
-                    trr += 1
-                    if trr == 8:
-                        trr = 0
-                    check.write(str(sr_prod_array[k,i,j]))
-                    check.write("\n")
-                    
+        split_prod_array = np.zeros((32, planning_data.shape[0], 11))
+
+    # Store contents of check2 file to output later if required
+    check_file_data = []
+
+    # Define the iterators
+    segment_combinations = range(split_prod_array.shape[0])
+    person_types = range(split_prod_array.shape[2])
+    # This part seems strange, it means that not all rows are used even in the
+    #  VB version
+    planning_data_rows = range(split_prod_array.shape[1] - 1)
+
+    int_zones = int_zones or (len(planning_data_rows) // 8)
+
+    # Variable to track the current household type (8 types)
+    household_num = 0
+    household_types = 8
+    # Iterate through the combinations of period, purpose, mode
+    for seg_num in segment_combinations:
+        # Iterate through the 11 person types
+        for person_num in person_types:
+
+            # Iterate through each row in planning data
+            # (num. zones * 8 household types)
+            for row in planning_data_rows:
+                # Index to the correct trip rate -
+                #  area type (-3 to match indexing),
+                #  segmentation (period, purpose, mode),
+                #  household type,
+                #  person type
+                trip_rate = production_trip_rates[
+                    area_correspondence[row] - 3,
+                    seg_num,
+                    household_num,
+                    person_num
+                ]
+                split_prod_array[seg_num, row, person_num] = (
+                    planning_data[row, person_num]
+                    * trip_rate
+                )
+
+                # Continue iterating through household numbers up to 8
+                household_num += 1
+                if household_num == household_types:
+                    household_num = 0
+                check_file_data.append(
+                    str(split_prod_array[seg_num, row, person_num])
+                )
+
+    if check_file is not None:
+        with open(check_file, "w", newline="") as f:
+            for line in check_file_data:
+                f.write(line)
+                f.write("\n")
+
     prod_factor_array = np.ones(output_shape)
-    
-    # Just Pivots is a debug option to output an extended version of the pivoting files
-    # Originally outputs just 64 columns - 2 periods * 4 Purposes * 2 Modes * 4 Household types
+
+    # Just Pivots is a debug option to output an extended version of
+    #  the pivoting files
+    # Originally outputs just 64 columns
+    # - 2 periods * 4 Purposes * 2 Modes * 4 Aggregated Household types
     column_width = 2 * 4 * 2 * 4
     if just_pivots is True:
-        # If just calculating the pivoting tables output all the possible time periods
-        # - 4 Periods * 4 Purposes * 2 Modes * 4 Household types
+        # If just calculating the pivoting tables output all
+        #  the possible time periods
+        # - 4 Periods * 4 Purposes * 2 Modes * 4 Aggregated Household types
         column_width = 4 * 4 * 2 * 4
         prod_factor_array = np.zeros(
-                (output_shape[0], output_shape[1] + 
-                 int(column_width / 2)))
-        
-    # aggregates the household types into C0, C11, C12, C2
-    for i in range(count_tav):
-        ca = 0
-        cb = 1
-        cc = 2
-        cd = 3
-        for j in range(column_width):
-            v = 0
-            for b in range(11):
-                if j == ca:
-                    v += (sr_prod_array[int((ca+4)/4)-1,0+(i*8),b] + 
-                                        sr_prod_array[int((ca+4)/4)-1,2+(i*8),b] + 
-                                        sr_prod_array[int((ca+4)/4)-1,5+(i*8),b])
-                if j == cb:
-                    v += sr_prod_array[int((cb+3)/4)-1,1+(i*8),b]
-                if j == cc:
-                    v += (sr_prod_array[int((cc+2)/4)-1,3+(i*8),b] + 
-                                        sr_prod_array[int((cc+2)/4)-1,6+(i*8),b])
-                if j == cd:
-                    v += (sr_prod_array[int((cd+1)/4)-1,4+(i*8),b] + 
-                                        sr_prod_array[int((cd+1)/4)-1,7+(i*8),b])
+            (output_shape[0], output_shape[1] +
+             int(column_width / 2)))
 
-            if j == ca:
-                ca += 4
-            if j == cb:
-                cb += 4
-            if j == cc:
-                cc += 4
-            if j == cd:
-                cd += 4
+    # Aggregate the household types into C0, C11, C12, C2
+    # - No cars available
+    # - 1 adult, 1 car
+    # - 2+ adults, 1 car
+    # - 2+ cars
 
-            prod_factor_array[i, j] = v
-    
+    # Planning data household types are stacked - 8 entries for each zone
+    # - ordered in the following way
+    c_0_idxs = [0, 2, 5]
+    c_11_idxs = [1]
+    c_12_idxs = [3, 6]
+    c_2_idxs = [4, 7]
+    agg_household_idxs = [c_0_idxs, c_11_idxs, c_12_idxs, c_2_idxs]
+
+    prod_factor_array = np.zeros(
+        (len(segment_combinations), len(agg_household_idxs), int_zones)
+    )
+
+    # Sum over all person types
+    split_prod_array = split_prod_array.sum(axis=2)
+    # Reshape to unstack household types
+    split_prod_array = split_prod_array.reshape(
+        (len(segment_combinations), household_types, int_zones),
+        order="F"
+    )
+
+    # Aggregate household types
+    for i, idxs in enumerate(agg_household_idxs):
+        # Slice to the aggregate household type indices and sum them
+        prod_factor_array[:, i, :] = split_prod_array[:, idxs, :].sum(axis=1)
+
+    # Reshape to 2D array with the correct column order (transposed)
+    required_segment_size = int(column_width / len(agg_household_idxs))
+    prod_factor_array = prod_factor_array[:required_segment_size, :, :]
+    prod_factor_array = prod_factor_array.reshape(column_width, int_zones).T
+
     return prod_factor_array
+
 
 def calculate_growth(base, forecast):
     growth = forecast / base
@@ -313,93 +421,174 @@ def calculate_growth(base, forecast):
     )
     return growth
 
-def apply_pivot_files(tod_data, cte_data, 
-                      production_growth, attraction_growth,
-                      airport_growth):
+
+def apply_pivot_files(tod_data: np.array,
+                      cte_data: np.array,
+                      production_growth: np.array,
+                      attraction_growth: np.array,
+                      airport_growth: np.array
+                      ) -> Tuple[np.array, np.array]:
     '''
     Applies growth to the base cte and tod files
-    
+
     '''
-    sw_array = np.zeros_like(tod_data, dtype="float")
-    
-    tod_attr_growth_idxs = [0,2,1,3,0,2,1,3,3]
-    for j in range(sw_array.shape[0] - 1):
-        sw_array[j,:,1:4] = ((cte_data[j,:,1:4] * production_growth[:,(1+8*j):(4+8*j)]) +
-                            (cte_data[j,:,4:7] * production_growth[:,(5+8*j):(8+8*j)])) * airport_growth[:,None]
-        sw_array[j,:,4] = tod_data[j,:,4] * production_growth[:,(4+8*j)] * airport_growth
-        sw_array[j,:,5] = tod_data[j,:,5] * attraction_growth[:,tod_attr_growth_idxs[j]] * airport_growth
+    # Initialise forecast array for TOD data
+    tod_f_array = np.zeros_like(tod_data, dtype="float")
 
-    sw_array[8,:,1:4] = ((cte_data[8,:,1:4] * production_growth[:,(1+8*7):(4+8*7)]) +
-                            (cte_data[8,:,4:7] * production_growth[:,(5+8*7):(8+8*7)])) * airport_growth[:,None]
-    sw_array[8,:,4] = tod_data[8,:,4] * production_growth[:,(4+8*7)] * airport_growth
-    sw_array[8,:,5] = tod_data[8,:,5] * attraction_growth[:,tod_attr_growth_idxs[7]] * airport_growth
+    # Apply growth to generate forecast .TOD arrays
 
-    sw_prod = {}
-    sw_attr = {}
-    sw_prod["1"] = sw_array[0,:,1:5].sum()
-    sw_prod["5"] = sw_array[4,:,1:5].sum()
-    sw_prod["4"] = sw_array[3,:,1:5].sum()
-    sw_prod["14"] = sw_array[7,:,1:5].sum()
-    sw_prod["17"] = sw_array[8,:,1:5].sum()
+    # TOD/CTE array dimensions are:
+    #  Period/Purpose = [AM(Work),AM(Other),AM(Business),AM(Education),
+    #        IP(Work),IP(Other),IP(Business),IP(Education),PM(Education)]
+    #  Zones = [num_zones]
+    #  Household Types / ATtractions = [TOD([C11, C12, C2, C0, Attractions]),
+    #      CTE([Car_C11, Car_C12, Car_C2, PT_C11, PT_C12, PT_C2, PT_C0, Attr])]
 
-    sw_attr["1"] = sw_array[0,:,5].sum()
-    sw_attr["5"] = sw_array[4,:,5].sum()
-    sw_attr["4"] = sw_array[3,:,5].sum()
-    sw_attr["14"] = sw_array[7,:,5].sum()
-    sw_attr["17"] = sw_array[8,:,5].sum()
+    # Reorder attraction growth purpose columns to match TOD/CTE order
+    tod_attr_growth_idxs = [0, 2, 1, 3, 0, 2, 1, 3, 3]
+    # Loop through AM and IP arrays
+    for j in range(tod_f_array.shape[0] - 1):
+        # Apply growth to C11, C12, and C2 columns by grouping Car / PT from
+        # the CTE array (as CTE is more precise)
+        # - extracting the relevant growth columns from the synthetic
+        #   future / base in 'production_growth'
+        tod_f_array[j, :, 1:4] = (
+            (cte_data[j, :, 1:4] * production_growth[:, (1+8*j):(4+8*j)])
+            + (cte_data[j, :, 4:7] * production_growth[:, (5+8*j):(8+8*j)])
+            ) * airport_growth[:, None]
+        # Apply the same process to C0 households (PT only)
+        tod_f_array[j, :, 4] = (
+            tod_data[j, :, 4]
+            * production_growth[:, (4+8*j)]
+            * airport_growth
+        )
+        # Finally apply attraction growth to the total attractions
+        #  (using tod_attr_growth_idxs to get the correct column in attraction
+        #   growth)
+        tod_f_array[j, :, 5] = (
+            tod_data[j, :, 5]
+            * attraction_growth[:, tod_attr_growth_idxs[j]]
+            * airport_growth
+        )
 
-    sw_array[0,:,5] *= (sw_prod["1"] / sw_attr["1"])
-    sw_array[4,:,5] *= (sw_prod["5"] / sw_attr["5"])
-    sw_array[3,:,5] *= (sw_prod["4"] / sw_attr["4"])
-    sw_array[7,:,5] *= (sw_prod["14"] / sw_attr["14"])
-    sw_array[8,:,5] *= (sw_prod["17"] / sw_attr["17"])
-    
-    sw_cte_array = np.zeros_like(cte_data, dtype="float")
-    prod_col_idxs = np.array([1,2,3,5,6,7,4])
-    cte_attr_growth_idxs = [None, 2, 1, None, None, 2, 1, None, None]
-    for j in range(sw_cte_array.shape[0]):
+    # Handle PM(Education) separately to fetch correct column in growth arrays
+    tod_f_array[8, :, 1:4] = (
+        (cte_data[8, :, 1:4] * production_growth[:, (1+8*7):(4+8*7)])
+        + (cte_data[8, :, 4:7] * production_growth[:, (5+8*7):(8+8*7)])
+        ) * airport_growth[:, None]
+    tod_f_array[8, :, 4] = (
+        tod_data[8, :, 4]
+        * production_growth[:, (4+8*7)]
+        * airport_growth
+    )
+    tod_f_array[8, :, 5] = (
+        tod_data[8, :, 5]
+        * attraction_growth[:, tod_attr_growth_idxs[7]]
+        * airport_growth
+    )
+
+    # Apply attraction matching to Work and Education matrices
+    tod_f_prod = {}
+    tod_f_attr = {}
+
+    tod_f_prod["AM_Work"] = tod_f_array[0, :, 1:5].sum()
+    tod_f_prod["IP_Work"] = tod_f_array[4, :, 1:5].sum()
+    tod_f_prod["AM_Edu"] = tod_f_array[3, :, 1:5].sum()
+    tod_f_prod["IP_Edu"] = tod_f_array[7, :, 1:5].sum()
+    tod_f_prod["PM_Edu"] = tod_f_array[8, :, 1:5].sum()
+
+    tod_f_attr["AM_Work"] = tod_f_array[0, :, 5].sum()
+    tod_f_attr["IP_Work"] = tod_f_array[4, :, 5].sum()
+    tod_f_attr["AM_Edu"] = tod_f_array[3, :, 5].sum()
+    tod_f_attr["IP_Edu"] = tod_f_array[7, :, 5].sum()
+    tod_f_attr["PM_Edu"] = tod_f_array[8, :, 5].sum()
+
+    tod_f_array[0, :, 5] *= (tod_f_prod["AM_Work"] / tod_f_attr["AM_Work"])
+    tod_f_array[4, :, 5] *= (tod_f_prod["IP_Work"] / tod_f_attr["IP_Work"])
+    tod_f_array[3, :, 5] *= (tod_f_prod["AM_Edu"] / tod_f_attr["AM_Edu"])
+    tod_f_array[7, :, 5] *= (tod_f_prod["IP_Edu"] / tod_f_attr["IP_Edu"])
+    tod_f_array[8, :, 5] *= (tod_f_prod["PM_Edu"] / tod_f_attr["PM_Edu"])
+
+    cte_f_array = np.zeros_like(cte_data, dtype="float")
+    # Set the production growth indexes to use
+    prod_col_idxs = np.array([1, 2, 3, 5, 6, 7, 4])
+    for j in range(cte_f_array.shape[0]):
+        # Handle AM and IP using the standard growth columns
         if j < 8:
-            sw_cte_array[j,:,1:8] = (cte_data[j,:,1:8] * 
-                        production_growth[:,prod_col_idxs+(j*8)] *
-                        airport_growth[:,None])
+            cte_f_array[j, :, 1:8] = (
+                cte_data[j, :, 1:8]
+                * production_growth[:, prod_col_idxs+(j*8)]
+                * airport_growth[:, None]
+            )
+        # PM Requires a different index to access the growth
         else:
-            sw_cte_array[j,:,1:8] = (cte_data[j,:,1:8] * 
-                        production_growth[:,prod_col_idxs+((j-1)*8)] *
-                        airport_growth[:,None])
-        # These columns do the following
-        if j in [0,3,4,7,8]:
-            sw_cte_array[j,:,8] = (cte_data[j,:,8] * 
-                        attraction_growth[:,tod_attr_growth_idxs[j]] * 
-                        airport_growth)
-        # Otherwise...
-        else:
-            sw_cte_array[j,:,8] = (cte_data[j,:,8] * 
-                        attraction_growth[:,cte_attr_growth_idxs[j]] * 
-                        airport_growth)
-    
-    return (sw_array, sw_cte_array)
+            cte_f_array[j, :, 1:8] = (
+                cte_data[j, :, 1:8]
+                * production_growth[:, prod_col_idxs+((j-1)*8)]
+                * airport_growth[:, None]
+            )
+        # Apply attraction growth
+        cte_f_array[j, :, 8] = (
+            cte_data[j, :, 8]
+            * attraction_growth[:, tod_attr_growth_idxs[j]]
+            * airport_growth
+        )
 
-def save_trip_end_files(file_names, trip_ends, base_path, precision):
+    return (tod_f_array, cte_f_array)
+
+
+def save_trip_end_files(file_names: List[str],
+                        trip_ends: np.array,
+                        base_path: str,
+                        precision: int
+                        ) -> None:
+
     for i, t_file in zip(range(trip_ends.shape[0]), file_names):
-        path = os.path.join(base_path, t_file.replace("_ALL", ""))
-        np.savetxt(path, np.concatenate(
-                (np.arange(trip_ends[i].shape[0])[:,None]+1, trip_ends[i][:,1:]),axis=1),
-                    delimiter=", ", 
-                    fmt=["%d"]+["%." + str(precision) + "f" for x in range(trip_ends[i].shape[1]-1)])
-                
 
-def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
-                base_year, base_id, base_scenario, is_rebasing_run=True,
-                log_func=print, just_pivots=False, airport_growth_file="",
-                integrate_home_working=False, legacy_trip_rates=False):
+        path = os.path.join(base_path, t_file.replace("_ALL", ""))
+        format_cols = ["%d"] + [
+            "%." + str(precision) + "f"
+            for x in range(trip_ends[i].shape[1]-1)
+        ]
+
+        out_arr = np.concatenate(
+            (
+                np.arange(trip_ends[i].shape[0])[:, None]+1,
+                trip_ends[i][:, 1:]
+            ),
+            axis=1
+        )
+        np.savetxt(
+            path,
+            out_arr,
+            delimiter=", ",
+            fmt=format_cols
+        )
+
+
+def telmos_main(delta_root: str,
+                tmfs_root: str,
+                tel_year: str,
+                tel_id: str,
+                tel_scenario: str,
+                base_year: str,
+                base_id: str,
+                base_scenario: str,
+                is_rebasing_run: bool = True,
+                log_func: Callable = print,
+                just_pivots: bool = False,
+                airport_growth_file: str = "",
+                integrate_home_working: bool = False,
+                legacy_trip_rates: bool = False
+                ) -> None:
     '''
-    Applies growth to base year trip end files for input into the second stage 
+    Applies growth to base year trip end files for input into the second stage
     of the TMfS18 trip end model
     '''
-    
-    
+
     # # Read in the trip rate matrices into multi-dim array
     factors_base = os.path.join(tmfs_root, "Factors")
+    log_func("Loading Production Trip Rates")
     if legacy_trip_rates:
         tr_message = "Loaded {} Trip Rate Factors with shape: {}"
         if integrate_home_working:
@@ -412,8 +601,10 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
                     wah_tag=work_type
                 )
                 log_func(
-                    tr_message.format(work_type, 
-                                      p_trip_rate_array[work_type].shape)
+                    tr_message.format(
+                        work_type,
+                        p_trip_rate_array[work_type].shape
+                    )
                 )
         else:
             p_trip_rate_array = read_trip_rates(factors_base, just_pivots)
@@ -431,16 +622,16 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
             work_type_split=integrate_home_working
         )
         log_func(f"Loaded Trip Rate Factors from {tr_path}")
-    
+
     # Load in the student factors and attraction factors separately
+    log_func("Loading Attraction Factors")
     attraction_file = "Attraction Factors.txt"
-    attraction_factors = np.loadtxt(os.path.join(factors_base, attraction_file))
-    
-    log_func("Loaded Attraction Factors with shape: %s" % str(attraction_factors.shape))
-    
+    attraction_factors = np.loadtxt(
+        os.path.join(factors_base, attraction_file))
+
     # Read in planning data and pivoting files
     # planning data
-    
+
     # If using home working split inputs, create 2 tmfs_array objects, one
     # for each split. These can be combined in create_production_pivot()
     if integrate_home_working:
@@ -460,47 +651,62 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
         tel_scenario,
         "tmfs%s%s.csv" % (tel_year, tel_scenario_tmfs)
     )
-    tel_tav_file = os.path.join(delta_root, tel_scenario, 
-                                 "tav_%s%s.csv" % (tel_year, tel_scenario.lower()))
+    tel_tav_file = os.path.join(
+        delta_root,
+        tel_scenario,
+        "tav_%s%s.csv" % (tel_year, tel_scenario.lower())
+    )
     # base pivoting files
-    base_tmfs_file = os.path.join(tmfs_root, "Runs", base_year, "Demand",
-                                  base_id, "tmfs%s_%s.csv" % (base_year, base_id))
-    base_tav_file = os.path.join(tmfs_root, "Runs", base_year, "Demand",
-                                  base_id, "tav_%s_%s.csv" % (base_year, base_id))
-    
-    
+    base_tmfs_file = os.path.join(
+        tmfs_root,
+        "Runs",
+        base_year,
+        "Demand",
+        base_id,
+        "tmfs%s_%s.csv" % (base_year, base_id)
+    )
+    base_tav_file = os.path.join(
+        tmfs_root,
+        "Runs",
+        base_year,
+        "Demand",
+        base_id,
+        "tav_%s_%s.csv" % (base_year, base_id)
+    )
+
+    log_func("Loading Base Year Synthetic Productions")
     tmfs_base_array = np.loadtxt(base_tmfs_file, skiprows=1, delimiter=",")
     count_i = tmfs_base_array.shape[0]
     tav_base_array = np.loadtxt(base_tav_file, skiprows=1, delimiter=",")
-    
-    
+
+    log_func("Loading Future Year Planning Data")
     tav_array = np.loadtxt(tel_tav_file, skiprows=1, delimiter=",")
     count_tav = tav_array.shape[0]
     tmfs_array = np.loadtxt(tel_tmfs_file, skiprows=1, delimiter=",",
                             usecols=use_cols_tmfs)
-    tmfs_array = np.concatenate((np.zeros_like(tmfs_array[:,[0,1]]), tmfs_array), axis=1)
+    tmfs_array = np.concatenate(
+        (np.zeros_like(tmfs_array[:, [0, 1]]), tmfs_array), axis=1)
     count_tmfs = tmfs_array.shape[0]
 
     # Extract the columns required for the 2 versions of tmfs_array if required
     if split_tmfs:
         tmfs_array = {
-            work_type: tmfs_array[:, split_cols] 
+            work_type: tmfs_array[:, split_cols]
             for work_type, split_cols in split_tmfs.items()
         }
         for work_type in tmfs_array:
-            tmfs_array[work_type][:,4], tmfs_array[work_type][:,5] = (
-                tmfs_array[work_type][:,5], tmfs_array[work_type][:,4].copy()
+            tmfs_array[work_type][:, 4], tmfs_array[work_type][:, 5] = (
+                tmfs_array[work_type][:, 5], tmfs_array[work_type][:, 4].copy()
             )
     else:
         # Previous version swaps columns 4 and 5 of the planning data
         # to be in line with the tmfs07 version expects
-        tmfs_array[:,4], tmfs_array[:,5] = (
-            tmfs_array[:,5], tmfs_array[:,4].copy()
+        tmfs_array[:, 4], tmfs_array[:, 5] = (
+            tmfs_array[:, 5], tmfs_array[:, 4].copy()
         )
-    
-    log_func("TAV Count: %d" % count_tav)
-    log_func("I Count: %d" % count_i)
-    log_func("TMFS Count: %d" % count_tmfs)
+
+    log_func(f"Number of Zones: {count_tav}")
+    log_func(f"Planning Data Row Count {count_tmfs}")
 
     # # # # # # # # # # # # # # # #
     # Put income segregation here #
@@ -508,6 +714,7 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # # # # # # # # # # # # # # # #
 
     # Rearrange and account for students
+    log_func("Applying Student Factor Splits")
     if split_tmfs:
         tmfs_adj_array = {}
         # Adjust each array individually
@@ -529,45 +736,52 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # tmfs_adj_array[:,7] = tmfs_adj_array[:,7] * (1 - MALE_STUDENT_FACTOR)
     # tmfs_adj_array[:,8] = tmfs_adj_array[:,8] * (1 - FEMALE_STUDENT_FACTOR)
 
-    log_func("TAV Base Array shape = %s" % str(tav_base_array.shape))
-    log_func("TMFS Array shape = {}".format(tmfs_array_shape))
-    log_func("TMFS Adj Array shape = {}".format(tmfs_adj_array_shape))
     # Attraction Factors
     # Apply the attraction factors to the tav array planning data
+    log_func("Creating Synthetic Attractions")
     attr_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id,
                              "tav_%s_%s.csv" % (tel_year, tel_id))
     attr_factors_array = create_attraction_pivot(tav_array, attraction_factors)
     # Output pivot attraction factors
     np.savetxt(attr_file, attr_factors_array.round(3), delimiter=",",
-            header="HW,HE,HO,HS", fmt="%.3f", comments="")
-    log_func("Attraction Factors saved to %s" % str(attr_file))
+               header="HW,HE,HO,HS", fmt="%.3f", comments="")
 
     # Calculate Attraction Growth Factors
-    attr_growth_array = calculate_growth(base=tav_base_array.round(3), forecast=attr_factors_array.round(3))
+    log_func("Calculating Attraction Growth")
+    attr_growth_array = calculate_growth(
+        base=tav_base_array.round(3), forecast=attr_factors_array.round(3))
 
     # # # # # # # # # # # #
     # Production Factors
-    area_corres_file = os.path.join(tmfs_root, "Factors", "AreaCorrespondence.csv")
-    area_corres_array = np.loadtxt(area_corres_file, skiprows=1, delimiter=",",
-                                   usecols=1, dtype="int8")
-    # Area correspondence array maps tmfs18 zones to their urban rural classification
+    log_func("Loading Area Correspondence Lookup")
+    area_corres_file = os.path.join(
+        tmfs_root, "Factors", "AreaCorrespondence.csv")
+    area_corres_array = np.loadtxt(
+        area_corres_file,
+        skiprows=1,
+        delimiter=",",
+        usecols=1,
+        dtype="int8"
+    )
+    # Area correspondence array maps tmfs18 zones to their urban
+    #  rural classification - repeat for each of the household types
     area_corres_array = np.repeat(area_corres_array, 8)
-    log_func("Area Correspondence shape = %s" % str(area_corres_array.shape))
-    
+
     check_file = os.path.join(tmfs_root, "Runs", tel_year,
                               "Demand", tel_id, "check2.csv")
-    
-    # Create the production pivot data - multiplying population/planning data 
+
+    # Create the production pivot data - multiplying population/planning data
     # by the trip rates
-    
+
     # For home working split data, we need to combine the resulting pivot data
+    log_func("Creating Synthetic Productions")
     if integrate_home_working:
         prod_factor_array = None
         for work_type in tmfs_adj_array:
             # Check that the work type is valid (Should be WAH or WBC)
             if work_type not in p_trip_rate_array:
                 raise ValueError("Error: Could not find split in Trip Rates")
-        
+
             # Pick out the columns that have not been split
             split_cols = [1, 2, 5, 6]
             # Halve all other columns to prevent double counts
@@ -575,17 +789,16 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
             non_split_cols = [x for x in range(split_pop_data.shape[1])
                               if x not in split_cols]
             split_pop_data[:, non_split_cols] /= 2
-        
+
             temp_prod_factors = create_production_pivot(
                 planning_data=split_pop_data,
                 production_trip_rates=p_trip_rate_array[work_type],
                 area_correspondence=area_corres_array,
-                check_file=check_file,
-                count_tav=count_tav,
                 output_shape=tmfs_base_array.shape,
-                just_pivots=just_pivots
+                just_pivots=just_pivots,
+                int_zones=count_tav
             )
-            
+
             if prod_factor_array is None:
                 prod_factor_array = temp_prod_factors
             else:
@@ -593,121 +806,131 @@ def telmos_main(delta_root, tmfs_root, tel_year, tel_id, tel_scenario,
     # Otherwise, can just use the output data
     else:
         prod_factor_array = create_production_pivot(
-            tmfs_adj_array,
-            p_trip_rate_array,
-            area_corres_array,
-            check_file,
-            count_tav,
-            tmfs_base_array.shape,
-            just_pivots
+            planning_data=tmfs_adj_array,
+            production_trip_rates=p_trip_rate_array,
+            area_correspondence=area_corres_array,
+            output_shape=tmfs_base_array.shape,
+            just_pivots=just_pivots,
+            check_file=check_file,
+            int_zones=count_tav
         )
-    
-    
-    prod_factor_file = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id, "tmfs%s_%s.csv" % (tel_year, tel_id))
-    
+
+    prod_factor_file = os.path.join(
+        tmfs_root,
+        "Runs",
+        tel_year,
+        "Demand",
+        tel_id,
+        "tmfs%s_%s.csv" % (tel_year, tel_id)
+    )
+
     # Output pivot production factors
-    file_header = ("WAC C0,WAC C11,WAC C12,WAC C2,WAP C0,WAP C11,WAP C12,"
-                   "WAP C2,OAC C0,OAC C11,OAC C12,OAC C2,OAP C0,OAP C11,OAP C12,OAP C2,"
-                   "EAC C0,EAC C11,EAC C12,EAC C2,EAP C0,EAP C11,EAP C12,EAP C2,SAC C0,"
-                   "SAC C11,SAC C12,SAC C2,SAP C0,SAP C11,SAP C12,SAP C2,WIC C0,WIC C11,"
-                   "WIC C12,WIC C2,WIP C0,WIP C11,WIP C12,WIP C2,OIC C0,OIC C11,OIC C12,"
-                   "OIC C2,OIP C0,OIP C11,OIP C12,OIP C2,EIC C0,EIC C11,EIC C12,EIC C2,"
-                   "EIP C0,EIP C11,EIP C12,EIP C2,SIC C0,SIC C11,SIC C12,SIC C2,SIP C0,"
-                   "SIP C11,SIP C12,SIP C2")
-    if just_pivots is True:
-        # Output pm and offpeak factors 
-        file_header += (",WPC C0,WPC C11,WPC C12,WPC C2,WPP C0,WPP C11,"
-                   "WPP C12,WPP C2,OPC C0,OPC C11,OPC C12,OPC C2,OPP C0,OPP C11,OPP C12,"
-                   "OPP C2,EPC C0,EPC C11,EPC C12,EPC C2,EPP C0,EPP C11,EPP C12,EPP C2,"
-                   "SPC C0,SPC C11,SPC C12,SPC C2,SPP C0,SPP C11,SPP C12,SPP C2"
-                   ",WOC C0,WOC C11,WOC C12,WOC C2,WOP C0,WOP C11,"
-                   "WOP C12,WOP C2,OOC C0,OOC C11,OOC C12,OOC C2,OOP C0,OOP C11,OOP C12,"
-                   "OOP C2,EOC C0,EOC C11,EOC C12,EOC C2,EOP C0,EOP C11,EOP C12,EOP C2,"
-                   "SOC C0,SOC C11,SOC C12,SOC C2,SOP C0,SOP C11,SOP C12,SOP C2")
-        np.savetxt(prod_factor_file, prod_factor_array.round(3), delimiter=",",
-                   header=file_header, fmt="%.3f", comments="")
-        log_func("Completed calculating pivoting tables")
+    purposes = ["W", "O", "E", "S"]
+    periods = ["A", "I"]
+    modes = ["C", "P"]
+    households = ["C0", "C11", "C12", "C2"]
+    if just_pivots:
+        periods.extend(["P", "O"])
+    file_header = [
+        f"{purp}{period}{mode} {hh}" for period, purp, mode, hh
+        in product(periods, purposes, modes, households)
+    ]
+    file_header = ",".join(file_header)
+
+    np.savetxt(prod_factor_file, prod_factor_array.round(3), delimiter=",",
+               header=file_header, fmt="%.3f", comments="")
+
+    if just_pivots:
+        log_func("Completed calculating synthetic PAs")
         log_func("Finished")
         return
 
-    np.savetxt(prod_factor_file, prod_factor_array.round(3), delimiter=",",
-                header=file_header, fmt="%.3f", comments="")
-    log_func("Production Factors saved to %s" % str(prod_factor_file))
-        
-    
-    ## # # # # # # # # #
+    # # # # # # # # # # #
     # Production Growth Factors
     # Calculate growth from the base and tel_year pivot files
-    prod_growth_array = calculate_growth(base=tmfs_base_array.round(3), forecast=prod_factor_array.round(3))
-    log_func("Production Growth Array shape = %s" % str(prod_growth_array.shape))
+    log_func("Calculating Production Growth")
+    prod_growth_array = calculate_growth(
+        base=tmfs_base_array.round(3),
+        forecast=prod_factor_array.round(3)
+    )
 
-    prefixes = ["AM","IP"]
+    log_func("Loading Base Year Calibrated Trip Ends")
+    prefixes = ["AM", "IP"]
     types = ["HWZ_A1", "HOZ_A1_ALL", "HEZ_A1_ALL", "HSZ_A1"]
-    tod_files = ["%s_%s.TOD" % (prefix, t) for prefix in prefixes for t in types] + ["PM_HSZ_A1.TOD"]
-    cte_files = [("%s_%s.CTE" % (prefix, t)).replace("A1","D0") for prefix in prefixes for t in types] + ["PM_HSZ_D0.CTE"]
-    
-    cte_tod_base_path = os.path.join(tmfs_root, "Runs", base_year,"Demand", base_id)
-    tod_data, cte_data = load_cte_tod_files(tod_files, cte_files, cte_tod_base_path)
-    
-    log_func("TOD Data Shape = %s" % str(tod_data.shape))
-    log_func("CTE Data Shape = %s" % str(cte_data.shape))
+    tod_files = ["%s_%s.TOD" % (prefix, t)
+                 for prefix in prefixes for t in types] + ["PM_HSZ_A1.TOD"]
+    cte_files = [("%s_%s.CTE" % (prefix, t)).replace("A1", "D0")
+                 for prefix in prefixes for t in types] + ["PM_HSZ_D0.CTE"]
 
-    airport_growth = np.ones(count_tav,dtype="float")
+    cte_tod_base_path = os.path.join(
+        tmfs_root, "Runs", base_year, "Demand", base_id)
+    tod_data, cte_data = load_cte_tod_files(
+        tod_files, cte_files, cte_tod_base_path)
+
+    airport_growth = np.ones(count_tav, dtype="float")
     if is_rebasing_run is False:
         # Airport indices are as follows (zones are indices + 1):
         #   708 = Edinburgh Airport
         #   709 = Prestwick Airport
         #   710 = Glasgow Airport
         #   711 = Aberdeen Airport
-        
-        #factors = pd.DataFrame([[708,1.05588],[709,1.0],[710,1.02371],[711,1.01213]])
-        
+
         # Factors updated as of TMfS 2018
-        #   708 = 4.97% Edinburgh 
+        #   708 = 4.97% Edinburgh
         #   709 = 7.6%  Prestwick
         #   710 = 3.33% Glasgow
         #   711 = 1.86% Aberdeen
-        
+
         ####
-        #   Previous method for airport growth < TMfS18 (constant value per annum)
-        #factors = pd.DataFrame([[708,1.0497],[709,1.076],[710,1.0333],[711,1.0186]])
-        #airport_growth[factors[0]] = factors[1] ** (int(tel_year) - int(base_year))
-        
+        #   Previous method for airport growth < TMfS18
+        #    (constant value per annum)
+
         ####
-        #   New method for airport growth >= TMfS18 (growth varies according to DfT 2017 aviation forecast)
-        # now reads in a file from "Factors" that contains the expected growth 
+        #   New method for airport growth >= TMfS18 (growth varies
+        #        according to DfT 2017 aviation forecast)
+        # now reads in a file from "Factors" that contains the expected growth
         # from 2017
         if airport_growth_file == "":
-            airport_growth_file = os.path.join(tmfs_root, "Factors", 
-                                           "airport_factors.csv")
+            airport_growth_file = os.path.join(
+                tmfs_root,
+                "Factors",
+                "airport_factors.csv"
+            )
+        log_func(f"Loading Airport Factors from {airport_growth_file}")
         if not os.path.isfile(airport_growth_file):
             raise FileNotFoundError("File does not exist: {}".format(
-                    airport_growth_file))
+                airport_growth_file))
         factors = pd.read_csv(airport_growth_file, index_col="Year")
-        factors = factors.loc[int(tel_year) + 2000]/factors.loc[int(base_year) + 2000]
+        factors = factors.loc[int(tel_year) + 2000] / \
+            factors.loc[int(base_year) + 2000]
         airport_growth[factors.index.astype("int")] = factors.values
 
-    sw_array, sw_cte_array = apply_pivot_files(tod_data, cte_data, 
-                                             prod_growth_array.round(5), attr_growth_array.round(5),
-                                             airport_growth)
-
-    log_func("SW Array shape = %s" % str(sw_array.shape))
+    log_func("Applying Growth to Calibrated Trip Ends")
+    sw_array, sw_cte_array = apply_pivot_files(
+        tod_data,
+        cte_data,
+        prod_growth_array.round(5),
+        attr_growth_array.round(5),
+        airport_growth
+    )
 
     # Print the TOD and CTE files - index +1: array(round(3))
-    # All the zones are internal, so are labelled continuously - 1->787 as of tmfs18
-    
+    # All the zones are internal, so are labelled continuously - 1->787
+    #   as of tmfs18
+
     base_path = os.path.join(tmfs_root, "Runs", tel_year, "Demand", tel_id)
-    
+
+    log_func("Saving .TOD Files")
     save_trip_end_files(tod_files, sw_array, base_path, 3)
-    log_func("TOD Files saved to %s" % str(base_path))
+    log_func("Saving .CTE Files")
     save_trip_end_files(cte_files, sw_cte_array, base_path, 5)
-    log_func("CTE Files saved to %s" % str(base_path))
-    
+
     # Check that each array CTE and TOD is > 15kBytes
-    for i,test_array in enumerate(sw_array):
+    for i, test_array in enumerate(sw_array):
         if test_array.nbytes < 15000:
             log_func("TOD Array is incomplete: %d" % i)
-    for i,test_array in enumerate(sw_cte_array):
+    for i, test_array in enumerate(sw_cte_array):
         if test_array.nbytes < 15000:
             log_func("CTE Array is incomplete: %d" % i)
-            
+
+    log_func("Finished Main Trip End Growth")
