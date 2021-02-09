@@ -75,6 +75,7 @@ def convert_rates_format(initial_array: np.array,
 
     return arr
 
+
 def extract_trip_rates():
     # Build Paths and load beta and rho files
     beta_path = os.path.join(INPUT_DIR, "IBETAhsr_NTEM7.2_NEW.csv")
@@ -114,7 +115,7 @@ def extract_trip_rates():
     for col_name, sum_cols in cols:
         rates[col_name] = rates[sum_cols].sum(axis=1) * rates["TripRates"]
     rates.drop(["m%dd%d" % (m, d) for m in range(1, 7) for d in range(1, 7)],
-            inplace=True, axis=1)
+               inplace=True, axis=1)
     rates.drop(["h", "TripRates"], axis=1, inplace=True)
 
     # Group similar purposes (other) together
@@ -157,18 +158,18 @@ def extract_trip_rates():
                 out_file = file_path.replace(".txt", f"_{work_type}.txt")
                 comb_args = [purpose, mode, period, area, work_type]
                 combined_arr = save_output(factored_arr,
-                                        out_path=out_file,
-                                        combined_arr=combined_arr,
-                                        combined_args=comb_args)
+                                           out_path=out_file,
+                                           combined_arr=combined_arr,
+                                           combined_args=comb_args)
 
         else:
             factored_arr = arr
             out_file = file_path
             comb_args = [purpose, mode, period, area]
             combined_arr = save_output(factored_arr,
-                                    out_path=out_file,
-                                    combined_arr=combined_arr,
-                                    combined_args=comb_args)
+                                       out_path=out_file,
+                                       combined_arr=combined_arr,
+                                       combined_args=comb_args)
 
         if DEBUG_MODE is True:
             ref_arr = np.loadtxt(os.path.join(ref_dir, filename))
