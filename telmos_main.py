@@ -10,14 +10,25 @@ import os
 from itertools import product
 from typing import Callable, Dict, List, Tuple, Union
 from collections import defaultdict
+import warnings
 
 import numpy as np
 import pandas as pd
 
 from scripts.extract_trip_rates import convert_rates_format
 
+# Factors applied to non-working to produce student population segmentation
 MALE_STUDENT_FACTOR = 0.2794
 FEMALE_STUDENT_FACTOR = 0.2453
+
+# Default Trip Rate file
+TR_FILE = "TripRates.csv"
+# Default Trip rate file for home-working split
+SPLIT_TR_FILE = "TripRatesSplit.csv"
+# Default Airport factor file
+AIRPORT_FAC_FILE = "airport_factors.csv"
+# Default Area correspondence file
+AREA_DEF_FILE = "AreaCorrespondence.csv"
 
 # Define the values used when reading in trip rates
 TR_PURPOSES = ["HBW", "HBO", "HBE", "HBS"]
@@ -25,6 +36,67 @@ TR_MODES = ["Car", "PT"]
 TR_PERIODS = ["AM", "IP", "PM"]
 TR_AREA_TYPES = list(range(3, 9))
 TR_WORK_TYPES = ["WAH", "WBC"]
+
+# Define the number of zones (used to check inputs only)
+INT_ZONES = 787
+ALL_ZONES = 803
+# Define checks for number of rows/columns in each input file
+INPUT_CHECKS = {
+    "TR": [len(list(product(TR_PURPOSES,
+                            TR_MODES,
+                            TR_PERIODS + ["OP"],
+                            TR_AREA_TYPES,
+                            range(88)))),  # 88 Traveller types
+           6],  # Exludes traveller type desc
+    "TR_SPLIT": [len(list(product(TR_PURPOSES,
+                                  TR_MODES,
+                                  TR_PERIODS + ["OP"],
+                                  TR_AREA_TYPES,
+                                  range(120)))),  # 88 + 32 from WAH/WBC split
+                 7],  # Exludes traveller type desc
+    "POP": [INT_ZONES * 8, 11],
+    "POP_SPLIT": [INT_ZONES * 8, 15],
+    "EMP": [INT_ZONES, 9],
+    "ATT_FAC": [15, 10],
+    "AREA": [ALL_ZONES, 2]
+}
+
+
+def check_input_dims(df: pd.DataFrame,
+                     input_check_flag: str,
+                     input_file_name: str = None,
+                     raise_err: bool = True
+                     ) -> bool:
+    """Checks the dimensions of an input dataframe against the expected values
+
+    Args:
+        df (pd.DataFrame): The input dataframe to check
+        input_check_flag (str): Flag used to get the expected values from
+        INPUT_CHECKS
+        input_file_name (str, optional): Name to display in the error/warning.
+        Defaults to None.
+        raise_err (bool, optional): If an error should be raised - if False,
+        will just raise a warning. Defaults to True.
+
+    Raises:
+        ValueError: If the dimensions are not as expected
+    """
+    messages = []
+    file_name = input_file_name or input_check_flag
+    target_dims = INPUT_CHECKS[input_check_flag]
+    if df.shape[0] != target_dims[0]:
+        messages.append(f"Incorrect number of rows in {file_name}: Should be "
+                        f"{target_dims[0]} but found {df.shape[0]}")
+    if df.shape[1] != target_dims[1]:
+        messages.append(f"Incorrect number of columns in {file_name}: Should "
+                        f"be {target_dims[1]} but found {df.shape[1]}")
+    if len(messages) > 0:
+        if raise_err:
+            raise ValueError("::".join(messages))
+        else:
+            warnings.warn("::".join(messages))
+        return False
+    return True
 
 
 def read_trip_rates(factors_dir, just_pivots):
@@ -117,7 +189,17 @@ def read_long_trip_rates(trip_rate_path: str,
     trip_rate_val = ["trip_rate"]
 
     # Read in all trip rates as a dataframe
-    tr_df = pd.read_csv(trip_rate_path)[trip_rate_seg + trip_rate_val]
+    try:
+        tr_df = pd.read_csv(trip_rate_path)[trip_rate_seg + trip_rate_val]
+    except KeyError as e:
+        raise ValueError(f"Could not find {e} in trip rate file"
+                         f": {trip_rate_path}")
+
+    # Check input dimensions are correct
+    input_ok = check_input_dims(tr_df,
+                                "TR_SPLIT" if work_type_split else "TR",
+                                input_file_name="Trip Rate File",
+                                raise_err=False)
 
     # Add off-peak to the period list if required
     periods = TR_PERIODS
@@ -143,7 +225,8 @@ def read_long_trip_rates(trip_rate_path: str,
 
         if work_type_split:
             for work_type in TR_WORK_TYPES:
-                filtered_df = df.loc[df["work_type"] == work_type]
+                use_work_types = ["ALL", work_type]
+                filtered_df = df.loc[df["work_type"].isin(use_work_types)]
                 arr = filtered_df.sort_values("traveller_type")[trip_rate_val]
                 arr = convert_rates_format(
                     arr.values,
@@ -577,6 +660,7 @@ def telmos_main(delta_root: str,
                 is_rebasing_run: bool = True,
                 log_func: Callable = print,
                 just_pivots: bool = False,
+                trip_rate_file: str = "",
                 airport_growth_file: str = "",
                 integrate_home_working: bool = False,
                 legacy_trip_rates: bool = False
@@ -586,8 +670,20 @@ def telmos_main(delta_root: str,
     of the TMfS18 trip end model
     '''
 
-    # # Read in the trip rate matrices into multi-dim array
+    # Build paths to the trip rate file
     factors_base = os.path.join(tmfs_root, "Factors")
+    if trip_rate_file == "":
+        # Use the default version
+        tr_name = SPLIT_TR_FILE if integrate_home_working else TR_FILE
+        tr_path = os.path.join(factors_base, tr_name)
+    else:
+        tr_path = trip_rate_file
+    # Check that the required file exists
+    if not os.path.isfile(tr_path):
+        raise ValueError(f"Trip Rate file does not exist: {tr_path}")
+    log_func(f"Using trip rates from {tr_path}")
+
+    # # Read in the trip rate matrices into multi-dim array
     log_func("Loading Production Trip Rates")
     if legacy_trip_rates:
         tr_message = "Loaded {} Trip Rate Factors with shape: {}"
@@ -612,22 +708,25 @@ def telmos_main(delta_root: str,
 
     # Read in the combined version of the trip rate files
     else:
-        tr_name = "TripRates.csv"
-        if integrate_home_working:
-            log_func("Integrating Home Working Splits")
-            tr_name = tr_name.replace("Rates", "RatesSplit")
-        tr_path = os.path.join(factors_base, tr_name)
         p_trip_rate_array = read_long_trip_rates(
             tr_path,
             work_type_split=integrate_home_working
         )
+        log_func(f"Using Split Trip Rates: {integrate_home_working}")
         log_func(f"Loaded Trip Rate Factors from {tr_path}")
 
     # Load in the student factors and attraction factors separately
     log_func("Loading Attraction Factors")
     attraction_file = "Attraction Factors.txt"
-    attraction_factors = np.loadtxt(
-        os.path.join(factors_base, attraction_file))
+    attraction_factors = pd.read_csv(
+        os.path.join(factors_base, attraction_file),
+        header=None,
+        delimiter=" "
+    )
+    att_fac_ok = check_input_dims(attraction_factors,
+                                  "ATT_FAC",
+                                  "Attraction Factors")
+    attraction_factors = attraction_factors.values
 
     # Read in planning data and pivoting files
     # planning data
@@ -680,10 +779,22 @@ def telmos_main(delta_root: str,
     tav_base_array = np.loadtxt(base_tav_file, skiprows=1, delimiter=",")
 
     log_func("Loading Future Year Planning Data")
-    tav_array = np.loadtxt(tel_tav_file, skiprows=1, delimiter=",")
+    tav_array = pd.read_csv(tel_tav_file)
+    check_input_dims(tav_array,
+                     "EMP",
+                     input_file_name="Employment Planning Data",
+                     raise_err=True)
+    tav_array = tav_array.values
     count_tav = tav_array.shape[0]
-    tmfs_array = np.loadtxt(tel_tmfs_file, skiprows=1, delimiter=",",
-                            usecols=use_cols_tmfs)
+    tmfs_array = pd.read_csv(tel_tmfs_file)
+    # tmfs_array = np.loadtxt(tel_tmfs_file, skiprows=1, delimiter=",")
+    # Check that the coorect number of columns are there
+    check_input_dims(tmfs_array,
+                     "POP_SPLIT" if integrate_home_working else "POP",
+                     input_file_name="Population Planning Data",
+                     raise_err=True)
+    tmfs_array = tmfs_array.values
+    tmfs_array = tmfs_array[:, list(use_cols_tmfs)]
     tmfs_array = np.concatenate(
         (np.zeros_like(tmfs_array[:, [0, 1]]), tmfs_array), axis=1)
     count_tmfs = tmfs_array.shape[0]
@@ -755,14 +866,12 @@ def telmos_main(delta_root: str,
     # Production Factors
     log_func("Loading Area Correspondence Lookup")
     area_corres_file = os.path.join(
-        tmfs_root, "Factors", "AreaCorrespondence.csv")
-    area_corres_array = np.loadtxt(
-        area_corres_file,
-        skiprows=1,
-        delimiter=",",
-        usecols=1,
-        dtype="int8"
-    )
+        tmfs_root, "Factors", AREA_DEF_FILE)
+    area_corres_array = pd.read_csv(area_corres_file, dtype="int")
+    area_ok = check_input_dims(area_corres_array,
+                               "AREA",
+                               "Area Definition File")
+    area_corres_array = area_corres_array.values[:, 1]
     # Area correspondence array maps tmfs18 zones to their urban
     #  rural classification - repeat for each of the household types
     area_corres_array = np.repeat(area_corres_array, 8)
@@ -894,7 +1003,7 @@ def telmos_main(delta_root: str,
             airport_growth_file = os.path.join(
                 tmfs_root,
                 "Factors",
-                "airport_factors.csv"
+                AIRPORT_FAC_FILE
             )
         log_func(f"Loading Airport Factors from {airport_growth_file}")
         if not os.path.isfile(airport_growth_file):

@@ -26,6 +26,7 @@ def telmos_all(delta_root: str,
                base_year: str,
                base_id: str,
                base_scenario: str,
+               trip_rate_file: str,
                rtf_file: str,
                ptf_file: str,
                airport_file: str,
@@ -37,7 +38,8 @@ def telmos_all(delta_root: str,
                just_pivots: bool = False
                ) -> None:
 
-    factor_files = dict(rtf=rtf_file, ptf=ptf_file, airport=airport_file)
+    factor_files = dict(rtf=rtf_file, ptf=ptf_file, airport=airport_file,
+                        tr_file=trip_rate_file)
 
     if print_func is None:
         print_func = print
@@ -62,6 +64,7 @@ def telmos_all(delta_root: str,
                     integrate_home_working=integrate_home_working,
                     log_func=print_func,
                     just_pivots=just_pivots,
+                    trip_rate_file=factor_files["tr_file"],
                     airport_growth_file=factor_files["airport"],
                     legacy_trip_rates=old_tr_fmt)
         if just_pivots is False:
