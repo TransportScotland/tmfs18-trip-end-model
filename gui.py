@@ -29,6 +29,9 @@ VAR_DEFAULTS = {
     "base_year": ["Base Year", "18"],
     "base_id": ["Base ID", "ZZZ"],
     "base_scenario": ["Base Scenario", "ZZ"],
+    "Trip Rates": ["Trip Rate File", "",
+                   "Should be the same as the trip rates used to create the "
+                   "base year (pivot) file"],
     "RTF File": ["RTF File", ""],
     "PTF File": ["PTF File", ""],
     "Airport Growth File": ["Airport Growth File", ""],
@@ -36,6 +39,8 @@ VAR_DEFAULTS = {
     "old_tr_fmt": ["Use Old Trip Rate Format (Legacy)", 0],
     "rebasing_run": ["Rebasing Run", REBASING_RUN]
 }
+
+ALT_FACTOR_VARS = ["Trip Rates", "RTF File", "PTF File", "Airport Growth File"]
 
 DESCRIPTION = (
     "This tool uses TELMoS planning data and trip rates from NTEM to "
@@ -69,6 +74,11 @@ TMFS_DIR_TT = (
     "and ADL is the base ID. An empty directory should also be "
     "created for the forecast year\n"
     "See the README for info on the required factors files."
+)
+
+ALT_FACTOR_TT = (
+    "Path to the alternative version for the {file_name} factor file. Leave "
+    "blank to use the default version in the 'Factors' folder."
 )
 
 
@@ -234,15 +244,20 @@ class Application:
             variable=self.vars["old_tr_fmt"]
         ).pack(side="top", anchor="w", padx=10)
 
-        for factor_var in ["RTF File", "PTF File", "Airport Growth File"]:
+        for factor_var in ALT_FACTOR_VARS:
+            user_name = self.user_names[factor_var]
+            tooltip = ALT_FACTOR_TT.format(file_name=user_name)
+            if len(VAR_DEFAULTS[factor_var]) == 3:
+                tooltip += f"\n{VAR_DEFAULTS[factor_var][2]}"
             widget = LabelledEntry(
                 factor_frame,
-                self.user_names[factor_var],
+                user_name,
                 self.vars[factor_var],
                 pack_side="top",
                 inter_pack_side="left",
                 w=30,
-                lw=30
+                lw=30,
+                tool_tip_text=tooltip
             )
             widget.add_browse(os.getcwd())
 
