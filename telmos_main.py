@@ -733,15 +733,15 @@ def telmos_main(delta_root: str,
 
     # If using home working split inputs, create 2 tmfs_array objects, one
     # for each split. These can be combined in create_production_pivot()
+    tel_scenario_tmfs = tel_scenario.lower()
     if integrate_home_working:
-        tel_scenario_tmfs = "{}_hw".format(tel_scenario.lower())
+        # tel_scenario_tmfs = "{}_hw".format(tel_scenario.lower())
         # Need to load in extra columns for the working at home split
         use_cols_tmfs = range(2, 15)
         # Define how the array will be split - take 2 sets of columns
-        split_tmfs = {"WAH": [0, 1, 2, 3, 4, 5, 6, 11, 12, 13, 14],
-                      "WBC": [0, 1, 2, 7, 8, 9, 10, 11, 12, 13, 14]}
+        split_tmfs = {"WAH": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                      "WBC": [0, 1, 2, 11, 12, 13, 14, 7, 8, 9, 10]}
     else:
-        tel_scenario_tmfs = tel_scenario.lower()
         use_cols_tmfs = range(2, 11)
         split_tmfs = None
 
