@@ -3,6 +3,11 @@
 Created on Wed Jul 31 09:57:11 2019
 
 @author: japeach
+
+Script for extracting trip rates from CTRIPEND database files.
+BASE_DIR and TRIP_RATE_NAME parameters should be set if required.
+convert_rates_format can be called from other areas in the trip end model
+
 """
 
 import os
@@ -14,14 +19,8 @@ import pandas as pd
 
 
 # PARAMETERS
-BASE_DIR = r"C:\Users\japeach\Documents\41456 - LATIS Scoping\Trip End Model"
-WORKING_DIR = os.path.join(BASE_DIR, "Home Working", "Trip Rates")
-INPUT_DIR = os.path.join(WORKING_DIR, "Input")
-TRIP_RATE_NAME = "210201 Combined Split Work Type"
-OUTPUT_DIR = os.path.join(WORKING_DIR, "Output", TRIP_RATE_NAME)
-
-if not os.path.isdir(OUTPUT_DIR):
-    os.makedirs(OUTPUT_DIR)
+BASE_DIR = "directory/containing/Home Working/and/Input/folders"
+TRIP_RATE_NAME = "triprate-set-name"
 
 DEBUG_MODE = False
 
@@ -78,8 +77,16 @@ def convert_rates_format(initial_array: np.array,
 
 def extract_trip_rates():
     # Build Paths and load beta and rho files
-    beta_path = os.path.join(INPUT_DIR, "IBETAhsr_NTEM7.2_NEW.csv")
-    rho_path = os.path.join(INPUT_DIR, "IRhomdhsr_NTEM7.2_NEW.csv")
+
+    working_dir = os.path.join(BASE_DIR, "Home Working", "Trip Rates")
+    input_dir = os.path.join(working_dir, "Input")
+    output_dir = os.path.join(working_dir, "Output", TRIP_RATE_NAME)
+
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+
+    beta_path = os.path.join(input_dir, "IBETAhsr_NTEM7.2_NEW.csv")
+    rho_path = os.path.join(input_dir, "IRhomdhsr_NTEM7.2_NEW.csv")
     ref_dir = os.path.join("Input Data", "Input", "Factors")
 
     b = pd.read_csv(beta_path)
@@ -88,7 +95,7 @@ def extract_trip_rates():
     # Fetch the lookup file for traveller type definitions if required
     s_lookup = None
     if COMBINE_OUTPUT:
-        s_lookup_path = os.path.join(INPUT_DIR, "DefTraveller.csv")
+        s_lookup_path = os.path.join(input_dir, "DefTraveller.csv")
         s_lookup = pd.read_csv(s_lookup_path)
         s_lookup["sDef"] = s_lookup["sDef"].str.strip("\"")
         s_lookup = s_lookup.set_index("s")["sDef"]
@@ -138,7 +145,7 @@ def extract_trip_rates():
     for purpose, mode, period, area in segment_iter:
 
         filename = "%s_%s_%s_%s.txt" % (purpose, mode, period, area)
-        file_path = os.path.join(OUTPUT_DIR, filename)
+        file_path = os.path.join(output_dir, filename)
 
         col = "%s_%s" % (period, mode)
         arr = g_rates.loc[
@@ -221,7 +228,7 @@ def extract_trip_rates():
             else:
                 combined_df = combined_df.append(df)
 
-        out_file = os.path.join(OUTPUT_DIR, f"{TRIP_RATE_NAME} Trip Rates.csv")
+        out_file = os.path.join(output_dir, f"{TRIP_RATE_NAME} Trip Rates.csv")
         sort_columns = columns + ["traveller_type"]
         combined_df = combined_df.sort_values(sort_columns)
         combined_df["tt_desc"] = combined_df["traveller_type"].map(s_lookup)
