@@ -11,18 +11,11 @@ convert_rates_format can be called from other areas in the trip end model
 """
 
 import os
-from typing import List
+from typing import List, Optional
 from itertools import product
 
 import numpy as np
 import pandas as pd
-
-
-# PARAMETERS
-BASE_DIR = "directory/containing/Home Working/and/Input/folders"
-TRIP_RATE_NAME = "triprate-set-name"
-
-DEBUG_MODE = False
 
 # Factors to apply to trip rates for home-working split
 SPLIT_HOME_WORKING = True
@@ -75,19 +68,17 @@ def convert_rates_format(initial_array: np.array,
     return arr
 
 
-def extract_trip_rates():
+def extract_trip_rates(input_dir: str, output_dir: str, trip_rate_name: str, 
+                       debug: bool=False, ref_dir: Optional[str]=None):
+    if debug and ref_dir is None:
+        raise ValueError('ref_dir must be provided when debug is set to True')
+
     # Build Paths and load beta and rho files
-
-    working_dir = os.path.join(BASE_DIR, "Home Working", "Trip Rates")
-    input_dir = os.path.join(working_dir, "Input")
-    output_dir = os.path.join(working_dir, "Output", TRIP_RATE_NAME)
-
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
     beta_path = os.path.join(input_dir, "IBETAhsr_NTEM7.2_NEW.csv")
     rho_path = os.path.join(input_dir, "IRhomdhsr_NTEM7.2_NEW.csv")
-    ref_dir = os.path.join("Input Data", "Input", "Factors")
 
     b = pd.read_csv(beta_path)
     r = pd.read_csv(rho_path)
@@ -178,7 +169,7 @@ def extract_trip_rates():
                                        combined_arr=combined_arr,
                                        combined_args=comb_args)
 
-        if DEBUG_MODE is True:
+        if debug:
             ref_arr = np.loadtxt(os.path.join(ref_dir, filename))
             diff = ref_arr - arr
             print("Identical matrix %s: %r" % (
@@ -187,7 +178,7 @@ def extract_trip_rates():
             ))
             total_diff += diff
 
-    if DEBUG_MODE is True:
+    if debug:
         print("Total difference is %d" % total_diff)
 
     if COMBINE_OUTPUT:
@@ -228,7 +219,7 @@ def extract_trip_rates():
             else:
                 combined_df = combined_df.append(df)
 
-        out_file = os.path.join(output_dir, f"{TRIP_RATE_NAME} Trip Rates.csv")
+        out_file = os.path.join(output_dir, f"{trip_rate_name} Trip Rates.csv")
         sort_columns = columns + ["traveller_type"]
         combined_df = combined_df.sort_values(sort_columns)
         combined_df["tt_desc"] = combined_df["traveller_type"].map(s_lookup)
@@ -236,4 +227,12 @@ def extract_trip_rates():
 
 
 if __name__ == "__main__":
-    extract_trip_rates()
+    # Assume files are located relative to this script. Untracked in .gitignore
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    trip_rate_name = "Base"
+
+    input_dir = os.path.join(base_dir, "Input")
+    output_dir = os.path.join(base_dir, "Output", trip_rate_name)
+    ref_dir = os.path.join("Input Data", "Input", "Factors")
+
+    extract_trip_rates(input_dir, output_dir, trip_rate_name, debug=False)

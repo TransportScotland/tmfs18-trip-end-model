@@ -140,3 +140,5 @@ cython_debug/
 # PROJECT-SPECIFIC
 Data/
 .vscode/
+scripts/Input
+scripts/Output
