@@ -13,6 +13,7 @@ convert_rates_format can be called from other areas in the trip end model
 import os
 from typing import List, Optional
 from itertools import product
+import re
 
 import numpy as np
 import pandas as pd
@@ -223,6 +224,25 @@ def extract_trip_rates(input_dir: str, output_dir: str, trip_rate_name: str,
         sort_columns = columns + ["traveller_type"]
         combined_df = combined_df.sort_values(sort_columns)
         combined_df["tt_desc"] = combined_df["traveller_type"].map(s_lookup)
+
+        # Handle non-workers
+        non_workers = combined_df["tt_desc"].str.contains(
+            pat=r"children|students|75\+", regex=True, flags=re.IGNORECASE
+        )
+
+        # Change "WAH" to "ALL", and drop "WBC" (the values should be the same)
+        combined_df["work_type"] = np.where(
+            non_workers & combined_df["work_type"].eq("WAH"),
+            "ALL", combined_df["work_type"]
+        )
+
+        combined_df["work_type"] = np.where(
+            non_workers & combined_df["work_type"].eq("WBC"),
+            np.nan, combined_df["work_type"]
+        )
+
+        combined_df.dropna(subset=["work_type"], inplace=True)
+
         combined_df.to_csv(out_file, index=False, float_format=FLOAT_FORMAT)
 
 
