@@ -505,6 +505,27 @@ def calculate_growth(base, forecast):
     return growth
 
 
+def apply_attraction_matching(arr: np.array,
+                              attraction_index: int
+                              ) -> np.array:
+    # Apply attraction matching to Work and Education matrices
+    prod_totals = {}
+    attr_totals = {}
+
+    attr_match_cols = {0: "AM_Work",
+                       4: "IP_Work",
+                       3: "AM_Edu",
+                       7: "IP_Edu",
+                       8: "PM_Edu"}
+
+    for idx, purp in attr_match_cols.items():
+        prod_totals[purp] = arr[idx, :, 1:attraction_index].sum()
+        attr_totals[purp] = arr[idx, :, attraction_index].sum()
+        arr[idx, :, attraction_index] *= prod_totals[purp] / attr_totals[purp]
+
+    return arr
+
+
 def apply_pivot_files(tod_data: np.array,
                       cte_data: np.array,
                       production_growth: np.array,
@@ -570,27 +591,8 @@ def apply_pivot_files(tod_data: np.array,
         * airport_growth
     )
 
-    # Apply attraction matching to Work and Education matrices
-    tod_f_prod = {}
-    tod_f_attr = {}
-
-    tod_f_prod["AM_Work"] = tod_f_array[0, :, 1:5].sum()
-    tod_f_prod["IP_Work"] = tod_f_array[4, :, 1:5].sum()
-    tod_f_prod["AM_Edu"] = tod_f_array[3, :, 1:5].sum()
-    tod_f_prod["IP_Edu"] = tod_f_array[7, :, 1:5].sum()
-    tod_f_prod["PM_Edu"] = tod_f_array[8, :, 1:5].sum()
-
-    tod_f_attr["AM_Work"] = tod_f_array[0, :, 5].sum()
-    tod_f_attr["IP_Work"] = tod_f_array[4, :, 5].sum()
-    tod_f_attr["AM_Edu"] = tod_f_array[3, :, 5].sum()
-    tod_f_attr["IP_Edu"] = tod_f_array[7, :, 5].sum()
-    tod_f_attr["PM_Edu"] = tod_f_array[8, :, 5].sum()
-
-    tod_f_array[0, :, 5] *= (tod_f_prod["AM_Work"] / tod_f_attr["AM_Work"])
-    tod_f_array[4, :, 5] *= (tod_f_prod["IP_Work"] / tod_f_attr["IP_Work"])
-    tod_f_array[3, :, 5] *= (tod_f_prod["AM_Edu"] / tod_f_attr["AM_Edu"])
-    tod_f_array[7, :, 5] *= (tod_f_prod["IP_Edu"] / tod_f_attr["IP_Edu"])
-    tod_f_array[8, :, 5] *= (tod_f_prod["PM_Edu"] / tod_f_attr["PM_Edu"])
+    # Apply attraction matching
+    tod_f_array = apply_attraction_matching(tod_f_array, attraction_index=5)
 
     cte_f_array = np.zeros_like(cte_data, dtype="float")
     # Set the production growth indexes to use
@@ -616,6 +618,9 @@ def apply_pivot_files(tod_data: np.array,
             * attraction_growth[:, tod_attr_growth_idxs[j]]
             * airport_growth
         )
+
+    # Apply attraction matching
+    cte_f_array = apply_attraction_matching(cte_f_array, attraction_index=8)
 
     return (tod_f_array, cte_f_array)
 
@@ -739,8 +744,8 @@ def telmos_main(delta_root: str,
         # Need to load in extra columns for the working at home split
         use_cols_tmfs = range(2, 15)
         # Define how the array will be split - take 2 sets of columns
-        split_tmfs = {"WAH": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                      "WBC": [0, 1, 2, 11, 12, 13, 14, 7, 8, 9, 10]}
+        split_tmfs = {"WBC": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                      "WAH": [0, 1, 2, 11, 12, 13, 14, 7, 8, 9, 10]}
     else:
         use_cols_tmfs = range(2, 11)
         split_tmfs = None
