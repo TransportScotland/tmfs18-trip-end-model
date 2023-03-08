@@ -5,6 +5,9 @@ This is the first stage of the trip end model for TMfS18. The process produces
 the underlying car and public transport travel demand inputs for the demand model 
 including movements associated with airport zones.
 
+Documentation can be found [here](https://transportscotland.github.io/tmfs18-trip-end-model/), 
+with the source files found in the `docs` folder of this repository.
+
 ## Usage
 Unless developing the tool, using the bundled executable version of the model is
 strongly recommended. The latest version should be downloaded from the 
