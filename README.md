@@ -11,7 +11,7 @@ strongly recommended. The latest version should be downloaded from the
 [releases page](https://github.com/TransportScotland/tmfs18-trip-end-model/releases).
 
 When run, this will look something like the following:
-![application screenshot](images/screenshot.png)
+![application screenshot](docs/media/gui_preview.png)
 
 ### Parameters
 The set of parameters required for the Base and Forecast scenarios follow a 

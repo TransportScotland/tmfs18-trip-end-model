@@ -1,0 +1,30 @@
+site_name: TMfS18 Trip End Model
+
+# This should be set to true (which is the default) for remote verisons, but
+# when developing locally you may want to uncomment this line:
+use_directory_urls: false
+
+theme:
+  name: material
+  icon:
+    logo: material/clipboard-text
+
+markdown_extensions:
+  - abbr
+  - footnotes
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.tabbed
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/palette.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
