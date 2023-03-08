@@ -1,0 +1,634 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="03_user_guide.html">
+      
+      
+        <link rel="next" href="05_programming_overview.html">
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.1">
+    
+    
+      
+        <title>Input and Output Files - TMfS18 Trip End Model</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.402914a4.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.a0c5b2b5.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="stylesheets/palette.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#input-and-output-files" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="TMfS18 Trip End Model" class="md-header__button md-logo" aria-label="TMfS18 Trip End Model" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 9H7V7h10m0 6H7v-2h10m-3 6H7v-2h7M12 3a1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1 1 1 0 0 1 1-1m7 0h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TMfS18 Trip End Model
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Input and Output Files
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="TMfS18 Trip End Model" class="md-nav__button md-logo" aria-label="TMfS18 Trip End Model" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 9H7V7h10m0 6H7v-2h10m-3 6H7v-2h7M12 3a1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1 1 1 0 0 1 1-1m7 0h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/></svg>
+
+    </a>
+    TMfS18 Trip End Model
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="01_introduction.html" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="02_methodology.html" class="md-nav__link">
+        Methodology
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="03_user_guide.html" class="md-nav__link">
+        User Guide
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Input and Output Files
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="04_io.html" class="md-nav__link md-nav__link--active">
+        Input and Output Files
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-files" class="md-nav__link">
+    Input Files
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trip-end-folder" class="md-nav__link">
+    Trip End Folder
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delta-folder" class="md-nav__link">
+    Delta Folder
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#factors-folder" class="md-nav__link">
+    Factors Folder
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-files" class="md-nav__link">
+    Output Files
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#telmos-output-files" class="md-nav__link">
+    TELMoS Output Files
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-data-files" class="md-nav__link">
+    Other Data Files
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="05_programming_overview.html" class="md-nav__link">
+        Programming Overview
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-files" class="md-nav__link">
+    Input Files
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trip-end-folder" class="md-nav__link">
+    Trip End Folder
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delta-folder" class="md-nav__link">
+    Delta Folder
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#factors-folder" class="md-nav__link">
+    Factors Folder
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output-files" class="md-nav__link">
+    Output Files
+  </a>
+  
+    <nav class="md-nav" aria-label="Output Files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#telmos-output-files" class="md-nav__link">
+    TELMoS Output Files
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-data-files" class="md-nav__link">
+    Other Data Files
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="input-and-output-files">Input and Output Files<a class="headerlink" href="#input-and-output-files" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>This section describes the input and output files used in the Trip End
+Model process. The files are described in sets depending on the
+containing folder.</p>
+<h2 id="input-files">Input Files<a class="headerlink" href="#input-files" title="Permanent link">&para;</a></h2>
+<p>The following are input files associated with the Trip End Model.</p>
+<h3 id="trip-end-folder">Trip End Folder<a class="headerlink" href="#trip-end-folder" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>TELMoS_script.py</code> - this is the file that can be run from
+  command-line or other scripting method if batches of runs need to be
+  executed; and</li>
+<li><code>gui.py</code> - the GUI version of the Trip End Model.</li>
+</ul>
+<h3 id="delta-folder">Delta Folder<a class="headerlink" href="#delta-folder" title="Permanent link">&para;</a></h3>
+<p>These files should be within a sub-folder within the Delta folder, named
+after the TELMoS ID:</p>
+<ul>
+<li>
+<p><code>tav_{tel_year}{tel_id}.csv</code> - the household and employment planning
+  data outputs from the TELMoS model. Contains the following columns:
+  zn, households, employment, agriculture and fishing, retail,
+  hospitality, local financial, education and health and social
+  services;</p>
+</li>
+<li>
+<p><code>tmfs_{tel_year}{tel_id}.csv</code> - the population planning data outputs
+  from TELMoS, include the columns: Zone, Household, Children,
+  Full-Time Male Worker, Full-Time Female Worker, Part-Time Male
+  Worker, Part-Time Female Worker, Non-working male, Non-working
+  Female, Male Retired and Female Retired; and</p>
+</li>
+<li>
+<p><code>trfl{tel_year}{tel_id}.dat</code> - this contains the good vehicle data
+  output from the TELMoS commodity model. It contains four columns:
+  Goods vehicle type, origin zone, destination zone and value</p>
+</li>
+</ul>
+<h3 id="factors-folder">Factors Folder<a class="headerlink" href="#factors-folder" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>RTF.dat</code> - contains the default Road Traffic Forecast growth
+  factors;</li>
+<li><code>PTF.dat</code> - contains the default Public Transport Forecast growth
+  factors;</li>
+<li><code>Attraction Factors.txt</code> - Contains the attraction trip rates;</li>
+<li><code>airport_factors.csv</code> - contains the default growth factors for each
+  airport zone, available from 2017 to 2050;</li>
+<li><code>TripRates.csv</code> - contains the trip rates used to create synthetic
+    productions. Columns required are (in order):<ul>
+<li>purpose - HBE, HBW, HBO, HBS;</li>
+<li>mode - Car, PT;</li>
+<li>period - AM, IP, (PM, OP optional);</li>
+<li>area - 3, 4, 5, 6, 7, 8;</li>
+<li>work_type - WAH, WBC - (optional: only required in <code>TripRatesSplit.csv</code>);</li>
+<li>traveller_type - 1 - 88;</li>
+<li>trip_rate - The trip rate for this segmentation (by default
+  rounded to 3 decimal places); and</li>
+<li>tt_desc - (optional: description of the traveller type)</li>
+</ul>
+</li>
+</ul>
+<h2 id="output-files">Output Files<a class="headerlink" href="#output-files" title="Permanent link">&para;</a></h2>
+<p>The following are the output files from the TMfS18 Trip End Model. The
+location and examples of the main files are described in Section 3. The
+examples below are for a model run that has the TELMoS year set as 18
+and the TELMoS scenario as AAL.</p>
+<h3 id="telmos-output-files">TELMoS Output Files<a class="headerlink" href="#telmos-output-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>tav_18_AAL.csv</code> - The attraction trip rates multiplied by the
+  planning data vectors for this scenario, used in future pivoting;</li>
+<li><code>tmfs18_AAL.csv</code> - The production trip rates multiplied by the
+  planning data vectors for this scenario, used in future pivoting;</li>
+<li><code>{period}_{purpose}_D0.CTE</code> - The trip end files (with car and PT
+  splits) - one file for each purpose (HBE, HBW, HBO, HBE) and each
+  time period (AM, IP, PM);</li>
+<li><code>{period}{purpose}.DAT</code> - The forecast matrix pre-external smoothing, where:<ul>
+<li>period is one of AM, IP, PM </li>
+<li>purpose is one of COM, OTH, EMP, HGV, LGV, PT;</li>
+</ul>
+</li>
+<li><code>{period}{purpose}TE.DAT</code> - The external trip ends for use in the
+  smoothing process - period is one of AM, IP, PM and purpose is one
+  of COM, OTH, EMP, HGV, LGV, PT;</li>
+<li><code>{purpose}_ADD_18AAL.MAT</code> - The add-in matrices for this year and
+  scenario, contain one table for each time period - purpose is one
+  of NWC, NOW, IW, HGV, LGV, PT; and</li>
+<li><code>{period}_HS_18AAL.MAT</code> - The forecast education matrix, the tables
+  in the matrix are: C11C, C12C, C2C, C11P, C12P, C2P, C0P - period
+  is one of AM, IP, PM.</li>
+</ul>
+<h3 id="other-data-files">Other Data Files<a class="headerlink" href="#other-data-files" title="Permanent link">&para;</a></h3>
+<p>There are a number of other files associated with the Trip End Model.
+Firstly, there are the files associated with building the executable
+file.</p>
+<p>Secondly there are a number of files associated with the CUBE catalog
+smoothing process. This manual has described the relevant use of these
+files but does not provide further detail as most of these files are
+generated automatically by CUBE.</p>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.b78d2936.min.js"></script>
+      
+        <script src="javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

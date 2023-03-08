@@ -1,0 +1,1157 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="01_introduction.html">
+      
+      
+        <link rel="next" href="03_user_guide.html">
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.1">
+    
+    
+      
+        <title>Methodology - TMfS18 Trip End Model</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.402914a4.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.a0c5b2b5.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="stylesheets/palette.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#methodology" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="TMfS18 Trip End Model" class="md-header__button md-logo" aria-label="TMfS18 Trip End Model" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 9H7V7h10m0 6H7v-2h10m-3 6H7v-2h7M12 3a1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1 1 1 0 0 1 1-1m7 0h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TMfS18 Trip End Model
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Methodology
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="TMfS18 Trip End Model" class="md-nav__button md-logo" aria-label="TMfS18 Trip End Model" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 9H7V7h10m0 6H7v-2h10m-3 6H7v-2h7M12 3a1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1 1 1 0 0 1 1-1m7 0h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/></svg>
+
+    </a>
+    TMfS18 Trip End Model
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="01_introduction.html" class="md-nav__link">
+        Introduction
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Methodology
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="02_methodology.html" class="md-nav__link md-nav__link--active">
+        Methodology
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-sources" class="md-nav__link">
+    Data Sources
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#national-trip-end-model-ntem" class="md-nav__link">
+    National Trip End Model (NTEM)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-rate-calculation" class="md-nav__link">
+    Trip Rate Calculation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#telmos-planning-data" class="md-nav__link">
+    TELMoS Planning Data
+  </a>
+  
+    <nav class="md-nav" aria-label="TELMoS Planning Data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#population-data" class="md-nav__link">
+    Population Data
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#households-and-employment-data" class="md-nav__link">
+    Households and Employment Data
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#goods-vehicle-data" class="md-nav__link">
+    Goods Vehicle Data
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-traffic-movements" class="md-nav__link">
+    External Traffic Movements
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-rail-movements" class="md-nav__link">
+    External Rail Movements
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#airport-related-travel-forecasts-growth-data" class="md-nav__link">
+    Airport Related Travel Forecasts Growth Data
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-application" class="md-nav__link">
+    Model Application
+  </a>
+  
+    <nav class="md-nav" aria-label="Model Application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#car-and-public-transport-trip-productions" class="md-nav__link">
+    Car and Public Transport Trip Productions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-attractions-and-attraction-factors" class="md-nav__link">
+    Trip Attractions and Attraction Factors
+  </a>
+  
+    <nav class="md-nav" aria-label="Trip Attractions and Attraction Factors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trip-attractions-within-the-demand-model" class="md-nav__link">
+    Trip Attractions within the Demand Model
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attraction-factors" class="md-nav__link">
+    Attraction Factors
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#goods-vehicles" class="md-nav__link">
+    Goods Vehicles
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#education-matrices" class="md-nav__link">
+    Education Matrices
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="03_user_guide.html" class="md-nav__link">
+        User Guide
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="04_io.html" class="md-nav__link">
+        Input and Output Files
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="05_programming_overview.html" class="md-nav__link">
+        Programming Overview
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    Overview
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-sources" class="md-nav__link">
+    Data Sources
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Sources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#national-trip-end-model-ntem" class="md-nav__link">
+    National Trip End Model (NTEM)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-rate-calculation" class="md-nav__link">
+    Trip Rate Calculation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#telmos-planning-data" class="md-nav__link">
+    TELMoS Planning Data
+  </a>
+  
+    <nav class="md-nav" aria-label="TELMoS Planning Data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#population-data" class="md-nav__link">
+    Population Data
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#households-and-employment-data" class="md-nav__link">
+    Households and Employment Data
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#goods-vehicle-data" class="md-nav__link">
+    Goods Vehicle Data
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-traffic-movements" class="md-nav__link">
+    External Traffic Movements
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#external-rail-movements" class="md-nav__link">
+    External Rail Movements
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#airport-related-travel-forecasts-growth-data" class="md-nav__link">
+    Airport Related Travel Forecasts Growth Data
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-application" class="md-nav__link">
+    Model Application
+  </a>
+  
+    <nav class="md-nav" aria-label="Model Application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#car-and-public-transport-trip-productions" class="md-nav__link">
+    Car and Public Transport Trip Productions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trip-attractions-and-attraction-factors" class="md-nav__link">
+    Trip Attractions and Attraction Factors
+  </a>
+  
+    <nav class="md-nav" aria-label="Trip Attractions and Attraction Factors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trip-attractions-within-the-demand-model" class="md-nav__link">
+    Trip Attractions within the Demand Model
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#attraction-factors" class="md-nav__link">
+    Attraction Factors
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#goods-vehicles" class="md-nav__link">
+    Goods Vehicles
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#education-matrices" class="md-nav__link">
+    Education Matrices
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="methodology">Methodology<a class="headerlink" href="#methodology" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The Trip End Model is an incremental model which pivots from files
+prepared as part of the TMfS18 base year model. Therefore, the relevant
+base year files must be accessible to operate the Trip End Model before
+a new run of the Trip End Model can be undertaken.</p>
+<p>Using this methodology, the trip end model acts entirely as a ratio
+model. Growth rates for each modelled zone are calculated using a
+combination of changes in planning data (number of households,
+population and employment forecast over time) and a series of trip
+rates. These rates of growth are then applied to TMfS base year trip
+ends to create forecast year trip ends.</p>
+<h2 id="data-sources">Data Sources<a class="headerlink" href="#data-sources" title="Permanent link">&para;</a></h2>
+<p>The Trip End Model uses data from five main sources, namely:</p>
+<ul>
+<li>Trip rate data from the UK Department for Transport (DfT) National Trip End Model (NTEM);</li>
+<li>Output planning data from the Transport Economic Land-Use Model Of Scotland (TELMoS);</li>
+<li>DfT Road Traffic Forecasts (RTF);</li>
+<li>Rail growth factors, currently derived from TELMoS GVA forecasts; and</li>
+<li>Airport growth data, for example from DfT aviation forecasts.</li>
+</ul>
+<p>The use of these data sources in the trip end model are discussed in the 
+following sections.</p>
+<h3 id="national-trip-end-model-ntem">National Trip End Model (NTEM)<a class="headerlink" href="#national-trip-end-model-ntem" title="Permanent link">&para;</a></h3>
+<p>The trip rates provided within the National Trip End Model (NTEM) form
+an integral part of the DfT's National Transport Model (NTM) and TEMPRO.
+There are three main components of the NTEM model, which have been
+incorporated into the TMfS model, including:</p>
+<ol>
+<li>Household car ownership forecasting;</li>
+<li>A demographic model which allocates household and person type
+    planning data to a system of 88 person-type categories; and</li>
+<li>Calculation of trip ends by applying trip rates to the number of
+    persons in each of the 88 person-type categories</li>
+</ol>
+<p>The NTEM trip rate structure is disaggregate and they are applied on a
+zonal basis at the person trip making level within the trip end model.
+These NTEM trip rates are also used within the TMfS Trip End Model.</p>
+<p>The NTEM person type categories are split into a matrix of eleven person
+types and eight household types generating 88 categories in total.</p>
+<p>The eleven person types are:</p>
+<ul>
+<li>Children (0 to 15);</li>
+<li>males in full time employment (16 to 74);</li>
+<li>males in part time employment (16 to 74);</li>
+<li>male students (16 to 74);</li>
+<li>male not employed / students (16 to 74) - unemployed plus other inactive;</li>
+<li>male 75+;</li>
+<li>females in full time employment (16 to 74);</li>
+<li>females in part time employment (16 to 74);</li>
+<li>female students (16 to 74);</li>
+<li>female not employed / students (16 to 74) - unemployed plus other inactive; and</li>
+<li>female 75+.</li>
+</ul>
+<p>The eight household types are:</p>
+<ul>
+<li>1 adult household with no access to a Car;</li>
+<li>1 adult household with access to one or more Cars;</li>
+<li>2 adult households with no access to a Car;</li>
+<li>2 adult households with access to one Car;</li>
+<li>2 adult households with access to two or more Cars;</li>
+<li>3+ adult households with no access to a Car;</li>
+<li>3+ adult households with access to one Car; and</li>
+<li>3+ adult households with access to two or more Cars.</li>
+</ul>
+<p>The specific travel modes included in NTEM are:</p>
+<ul>
+<li>Walk;</li>
+<li>Cycle;</li>
+<li>Car driver;</li>
+<li>Car passenger;</li>
+<li>Bus; and</li>
+<li>Rail (including underground).</li>
+</ul>
+<p>Note that the walk and cycle modes are not included within the TMfS18 Trip End Model.</p>
+<p>Production trip rates for these 88 categories are obtained from the NTEM
+using the input databases to the <code>CTRIPEND</code> software<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. The <code>IBETAhsr</code>
+table was used to provide the weekly trip rates by purpose, traveller
+type and area type. The table <code>IRHOmdshr</code> was used to split these trip
+rates by time period and mode.</p>
+<p>Note that for the purposes of TMfS18, and TMfS14, each zone is assigned
+a relevant NTEM "Area Type" in the <code>AreaCorrespondence.csv</code> input file.
+This replaces the previous method where "Area Type 5" (Urban Medium) was
+applied to all zones.</p>
+<p>Trip rates are stored within a single file containing columns for each
+segmentation available: purpose, mode, period, area type, traveller
+type, and commute category (Working at Home - WAH and Working by
+Commute - WBC).</p>
+<p>This file storage method is a change from previous versions of the Trip
+End Model, where separate files were used for each segmentation, and
+should increase maintainability and clarity if these values need to be
+altered in the future. The trip rate files are stored in the "Factors"
+folder in the files <code>TripRates.csv</code> and <code>TripRatesSplit.csv</code>, for the
+standard trip rates and the WAH/WBC split trip rates, respectively.</p>
+<p>The car driver and car passenger rates are combined to produce car
+person trip rates. Similarly, bus and rail trip rates are combined to
+produce general public transport trip rates.</p>
+<h3 id="trip-rate-calculation">Trip Rate Calculation<a class="headerlink" href="#trip-rate-calculation" title="Permanent link">&para;</a></h3>
+<p>The relevant calculations applied for the trip rate for 
+<em>AM Peak Car, for a Male in Full time Work, from a 3 adults with 2+ car household</em>
+are illustrated below as an example of how these trip rates were
+calculated from the databases.</p>
+<ul>
+<li>The weekly trip rate for a Male in Full time Work from a 3 adults with
+  2+ car household (all modes, all week) is 4.081137 (from <code>IBETAshr</code>)</li>
+<li>The relevant mode splits for an (AM) Car Driver and an (AM) Car
+  Passenger are 0.541076 and 0.042546, respectively (from <code>IRHOmdhsr</code>).</li>
+<li>This creates a weekly AM car trip rate of <span class="arithmatex">\(4.081137 * (0.541076 + 0.042546) = 2.38184\)</span></li>
+<li>A similar calculation is carried out for the PT trip rates using the
+  bus and rail splits from <code>IRHOmdshr</code>.</li>
+</ul>
+<p>For the WAH/WBC segmentation, the same operation is carried out for each
+segment using the relevant trip rates.</p>
+<h3 id="telmos-planning-data">TELMoS Planning Data<a class="headerlink" href="#telmos-planning-data" title="Permanent link">&para;</a></h3>
+<p>To enable forecasting, the Trip End Model requires various planning data
+which describes how the number of households, population and employment
+located within each modelled zone may change over time. This data is
+used to create growth factors for each modelled zone between the base
+year and each forecast year scenario.</p>
+<p>The planning data input to the Trip End Model is provided by the TELMoS
+land‑use model. Examples of TELMoS outputs (and therefore inputs to the
+Trip End Model) are described in the below sections.</p>
+<h4 id="population-data">Population Data<a class="headerlink" href="#population-data" title="Permanent link">&para;</a></h4>
+<p>These files have the file naming convention of <code>tmfs{model year}{test id}.CSV</code>. 
+These files contain the population data for each zone separated by eight 
+household types and nine person types (note that the data excludes separate 
+student population columns, as students are included in the "Non-Working"
+section). Within the Trip End Model, the student data set is extracted
+from the non-working column using a set of factors, which are 0.2794 for
+Males and 0.2453 for Females<sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup>. Once the student data is separated,
+this generates the full 88 person type categories as described
+previously.</p>
+<p>An option has been added to the Trip End Model to allow population data
+to be used that splits full-time and part-time workers into 2
+categories, Working at Home and Working by Commute. This brings the
+number of fields in the population data shown in the below image from 11 up to
+15 (including zone and household type). If this format of population is
+being used, the <code>TripRatesSplit.csv</code> file must be supplied, providing
+trip rates for each working location segment - see previous section
+"National Trip End Model (NTEM)" for details. If the population data is
+being provided using this split, the suffix <code>_hw</code> (indicating
+home-working splits) should be added to the file name for version
+control, e.g. instead of <code>tmfs18XX.csv</code>, the file name would be
+<code>tmfs18XX_hw.csv</code>.</p>
+<p><img alt="" src="media/example_population_data.png" /></p>
+<h4 id="households-and-employment-data">Households and Employment Data<a class="headerlink" href="#households-and-employment-data" title="Permanent link">&para;</a></h4>
+<p>These files have the file naming convention of <code>tav\_{model year}{test id}.CSV</code>. 
+These data files contain the total number of household and employment (jobs) for
+each modelled zone. Employment data is further separated by employment
+type, including agriculture and fishing, retail, hospitality, local
+financial, education and health and social services. These separate
+employment types allow the use of different trip attraction ratios
+within the Trip End Model. It should be noted that the included
+employment categories are not comprehensive and, therefore, do not equal
+the total employment figures.</p>
+<p><img alt="" src="media/example_hh_emp_data.png" /></p>
+<h4 id="goods-vehicle-data">Goods Vehicle Data<a class="headerlink" href="#goods-vehicle-data" title="Permanent link">&para;</a></h4>
+<p>These files have the file naming convention of <code>trfl{model year}{test id}.DAT</code>. 
+These files represent a matrix of travel movements set out within a flat file 
+format. The file contains four columns which represent:</p>
+<ul>
+<li>vehicle type (1=LGV, 2=OGV),</li>
+<li>origin zone, </li>
+<li>destination zone, and </li>
+<li>vehicle flow.</li>
+</ul>
+<p>Note that within the file naming convention, "model year" refers to the
+relevant base or forecast modelled year scenario. "Test id" represents
+the TELMoS model test ID code.</p>
+<p><img alt="" src="media/example_gv_data.png" /></p>
+<h3 id="external-traffic-movements">External Traffic Movements<a class="headerlink" href="#external-traffic-movements" title="Permanent link">&para;</a></h3>
+<p>DfT Road Traffic Forecast (RTF) data is used to create the future growth
+in road travel movements for cars between the external areas of TMfS
+(i.e. areas outside of Scotland). This includes external to external
+trips, external to internal and vice-versa.</p>
+<p>The 2018 RTF factors are shown below. They represent RTF Scenario 1
+(Reference) for England and Wales<sup id="fnref:3"><a class="footnote-ref" href="#fn:3">3</a></sup>, which are rebased to 2015 and
+interpolated for LATIS forecast years between the RTF 5-year intervals
+(2015, 2020, 2025 etc up to 2050).</p>
+<table>
+<thead>
+<tr>
+<th align="right">Year</th>
+<th align="right">Car</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">2015</td>
+<td align="right">1.00</td>
+</tr>
+<tr>
+<td align="right">2018</td>
+<td align="right">1.04</td>
+</tr>
+<tr>
+<td align="right">2022</td>
+<td align="right">1.09</td>
+</tr>
+<tr>
+<td align="right">2027</td>
+<td align="right">1.14</td>
+</tr>
+<tr>
+<td align="right">2032</td>
+<td align="right">1.19</td>
+</tr>
+<tr>
+<td align="right">2037</td>
+<td align="right">1.23</td>
+</tr>
+<tr>
+<td align="right">2042</td>
+<td align="right">1.28</td>
+</tr>
+</tbody>
+</table>
+<p>These growth factors are applied within a gravity model to forecast
+changes in external travel movements over time. The base year external
+trip ends (including external to internal and vice versa) are factored
+using these growth values to create forecast year external trip ends.
+These forecast trip ends are then applied to a gravity model (in tandem
+with the base year matrices) to create forecast year external matrices.</p>
+<p>The gravity model effectively applies a smoothing process to reduce the
+level of inappropriate large cell-to-cell movements within these
+matrices. A similar process is applied during the development of the
+base year external travel demand.</p>
+<h3 id="external-rail-movements">External Rail Movements<a class="headerlink" href="#external-rail-movements" title="Permanent link">&para;</a></h3>
+<p>Factors associated with external rail trips are factored separately to
+those of road traffic. The growth factors for rail trips are based on</p>
+<ul>
+<li>forecast Scotland Gross Value Added (GVA) data from TELMoS; and</li>
+<li>rail demand elasticity from the Passenger Demand Forecasting
+    Handbook (PDFH) version 6.</li>
+</ul>
+<p>To calculate the growth factors, the GVA growth was adjusted by an
+elasticity of 1.1 from PDFH6 Table B2.3b, representing an elasticity
+between the values for Non-London "between core cities" (1.25) and
+"Other" (1.0). These growth factors are shown below for the key
+LATIS forecast years.</p>
+<table>
+<thead>
+<tr>
+<th align="right">Year</th>
+<th align="right">Rail Demand Growth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">2018</td>
+<td align="right">1.000</td>
+</tr>
+<tr>
+<td align="right">2022</td>
+<td align="right">1.047</td>
+</tr>
+<tr>
+<td align="right">2027</td>
+<td align="right">1.134</td>
+</tr>
+<tr>
+<td align="right">2032</td>
+<td align="right">1.223</td>
+</tr>
+<tr>
+<td align="right">2037</td>
+<td align="right">1.306</td>
+</tr>
+<tr>
+<td align="right">2042</td>
+<td align="right">1.391</td>
+</tr>
+</tbody>
+</table>
+<h3 id="airport-related-travel-forecasts-growth-data">Airport Related Travel Forecasts Growth Data<a class="headerlink" href="#airport-related-travel-forecasts-growth-data" title="Permanent link">&para;</a></h3>
+<p>Surface access to Scottish Airports by car and public transport is
+included within TMfS. The airport zones included in TMfS18 are displayed
+below.</p>
+<table>
+<thead>
+<tr>
+<th>Airport</th>
+<th align="right">Zone</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edinburgh Airport</td>
+<td align="right">709</td>
+</tr>
+<tr>
+<td>Prestwick Airport</td>
+<td align="right">710</td>
+</tr>
+<tr>
+<td>Glasgow Airport</td>
+<td align="right">711</td>
+</tr>
+<tr>
+<td>Aberdeen Airport</td>
+<td align="right">712</td>
+</tr>
+</tbody>
+</table>
+<p>The growth factors for the airport zones are provided to the Trip End
+Model in the <code>airport_factors.csv</code> file within the "Factors" folder.</p>
+<p>Potential future changes to these types of travel movement can be
+calculated using the UK Aviation Forecasts 2017 from the DfT<sup id="fnref:4"><a class="footnote-ref" href="#fn:4">4</a></sup>, which
+present forecast passenger figures for UK airports from 2016 to 2050,
+and have been used to prepare a set of growth factors.</p>
+<p>The percentage annual growth for airport-related trips is applied
+consistently to all car and public transport trip purposes.</p>
+<h2 id="model-application">Model Application<a class="headerlink" href="#model-application" title="Permanent link">&para;</a></h2>
+<h3 id="car-and-public-transport-trip-productions">Car and Public Transport Trip Productions<a class="headerlink" href="#car-and-public-transport-trip-productions" title="Permanent link">&para;</a></h3>
+<p>Synthesised trip production vectors are created for the model base year
+(pivot year) and each forecast year scenario by multiplying the trip
+rates (calculated from NTEM) with the population planning data (output
+from TELMoS). This forms a set of zone-based vectors for each travel
+mode, purpose and person type for each year.</p>
+<p>The synthesised forecast year vectors are then divided by the
+synthesised base year vectors to prepare growth factors. These growth
+factors are then applied to the calibrated TMfS18 base year trip ends to
+prepare forecast year trip ends for input to the demand model. This
+process can be described as:</p>
+<div class="arithmatex">\[P_{m,t,p}^{f} = \ P_{m,t,p}^{b}\ \frac{NTEM_{m,t,p}^{f}}{NTEM_{m,t,p}^{b}}\]</div>
+<p>where:</p>
+<ul>
+<li><span class="arithmatex">\(P_{m,t,p}^{f}\)</span> represents forecast year person trip productions by mode/Car
+  availability <code>m</code>, time period <code>t</code>, and journey purpose <code>p</code></li>
+<li><span class="arithmatex">\(P_{m,t,p}^{b}\)</span> represents base year person trip productions by mode/Car
+  availability <code>m</code>, time period <code>t</code>, and journey purpose <code>p</code></li>
+<li><span class="arithmatex">\(NTEM_{m,t,p}^{f}\)</span> represents forecast year person trip productions by
+  mode/Car availability <code>m</code>, time period <code>t</code>, and journey purpose <code>p</code>,
+  produced by NTEM model trip rates</li>
+<li><span class="arithmatex">\(NTEM_{m,t,p}^{b}\)</span> represents base year person trip productions by mode/Car
+  availability <code>m</code>, time period <code>t</code>, and journey purpose <code>p</code>, produced by NTEM
+  trip rates</li>
+</ul>
+<p>Initially, trip ends are generated for eight home-based journey
+purposes, of which commute, employers-business and education trips are
+applied directly within the TMfS demand model. The remaining five
+purposes (shopping, personal business, recreation, visiting and holiday)
+are combined to form the home-based other trip purpose, which is also
+applied within the TMfS demand model.</p>
+<p>Each journey purpose is then separated into the following car ownership
+segments for input to the TMfS demand model:</p>
+<ul>
+<li>persons from non-car owning households;</li>
+<li>persons from single car owning households with 1 adult;</li>
+<li>persons from single car owning households with 2+ adults; and</li>
+<li>persons from multi car owning households.</li>
+</ul>
+<p>The Morning Peak, Inter Peak and Evening Peak time periods in NTEM are
+directly compatible with the TMfS time periods.</p>
+<p>Note that the process above is used to generate trip productions for
+from-home trip purposes for inclusion to the TMfS demand model. To-home
+trips and non-homebased trip ends are created using a separate process
+(based on these trip productions) within the demand model.</p>
+<h3 id="trip-attractions-and-attraction-factors">Trip Attractions and Attraction Factors<a class="headerlink" href="#trip-attractions-and-attraction-factors" title="Permanent link">&para;</a></h3>
+<p>The trip attraction process is a parallel procedure undertaken in tandem
+with preparing trip productions. The Trip End Model includes separate
+trip attractions for each journey purpose and time period. However,
+attractions are in a more aggregate form with all household/car
+ownership segments and travel modes combined.</p>
+<h4 id="trip-attractions-within-the-demand-model">Trip Attractions within the Demand Model<a class="headerlink" href="#trip-attractions-within-the-demand-model" title="Permanent link">&para;</a></h4>
+<p>Within the demand model trip attractions fall into two distinct
+categories:</p>
+<ul>
+<li>Trip attractions for home-based work (commute) which is a doubly
+  constrained travel purpose in the destination choice model; and</li>
+<li>Trip attraction factors for home-based employer's business and
+  home-based other, which are singly constrained travel purposes in
+  the destination choice model.</li>
+</ul>
+<p>Home-based work attractions represent actual trip attractions and act as
+constraints within the destination choice process.</p>
+<p>For the Home-based Employer's Business and Home-Based Other purposes,
+however, attraction factors (attraction weightings) are applied. These
+are used in tandem with generalised costs to distribute trips across
+destinations. Therefore, there are no constraints for the actual trip
+attractions to equal the attraction factors for each zone. This process
+represents the specific HBE and HBO travel purposes which are singularly
+constrained within the demand model.</p>
+<p>The attraction factors for the base-year were calculated using an
+iterative process. This involved successively adjusting attraction
+factors and applying the singly constrained model until the resulting
+actual trip attractions best matched those within the base matrices
+(used in the destination choice model calibration).</p>
+<h4 id="attraction-factors">Attraction Factors<a class="headerlink" href="#attraction-factors" title="Permanent link">&para;</a></h4>
+<p>The trip attraction factors applied in the Trip End Model are described
+in the file <code>Attraction Factors.txt</code> in the "Factors" folder. The
+attraction factors represent the relationship between different trip
+purposes and different land use types. These data illustrate the number
+of trips attracted to each type of job per week. For example, there are
+(on average) 4,348 trips to school for each job in education.</p>
+<p>The attraction factors, similar to the production trip rates, are
+applied to the planning data for both the base (pivot) year and forecast
+year scenarios. The resultant (synthesised) trip end vectors are then
+used to produce growth factors, which are applied to the calibrated TMfS
+trip end attractions. Consistent attraction growth factors are used for
+all travel modes for each travel purpose.</p>
+<p>Note that these factors are not applied to produce actual levels of trip
+attractions. They are used to represent sectors that have different
+factors, and as a result provide different attraction weightings for the
+various land use types on a zonal basis.</p>
+<p>Within the Trip End Model, the total level of trip productions is used
+as a constraint to ensure that the total level of trip attractions match
+total productions.</p>
+<h3 id="goods-vehicles">Goods Vehicles<a class="headerlink" href="#goods-vehicles" title="Permanent link">&para;</a></h3>
+<p>Goods vehicle trips are not subject to the core TMfS Demand Model
+processes. Changes in goods vehicle trips over time are created within a
+separate process. This applies a combination of TMfS base year goods
+vehicles matrices and goods vehicle data extracted from the commodity
+model within TELMoS. The resultant goods vehicle matrices are prepared
+independently of the Demand Model for each future year and economic
+growth scenario.</p>
+<p>The base year goods vehicle matrices (formatted in Passenger Car Units -
+PCUs) are described for each modelled hour (AM Peak, Inter Peak and PM
+Peak) and by vehicle type, (LGV and HGV). The forecasting process
+applied to these base matrices has the following four steps:</p>
+<ol>
+<li>Calculate forecast year percentage growth on a trip end basis
+   between TELMoS base year and forecast year matrices (these matrices
+   cover internal goods vehicle movements within the TMfS modelled
+   area);</li>
+<li>Apply this percentage growth to the TMfS base year goods vehicle
+   trip ends;</li>
+<li>Apply NRTF growth to external zones; and</li>
+<li>Input these trip ends, along with the base year matrices through a
+   gravity model to produce smoothed forecast year matrices.</li>
+</ol>
+<p>This process is applied to all TMfS18 goods vehicle trips including
+cross-border movements.</p>
+<h3 id="education-matrices">Education Matrices<a class="headerlink" href="#education-matrices" title="Permanent link">&para;</a></h3>
+<p>The education travel matrices included within TMfS18 are input post the
+main demand model stage. Within the Trip End Model, education-based trip
+end files are created using a consistent process as applied for other
+travel purposes. The forecast year education matrices are then created
+by using these synthesised trip ends and the (calibrated) base (pivot)
+year education matrices within a gravity model.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>CTRIPEND User Manual, Department for Transport, 2016.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>These factors were generated using population data from TELMoS&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:3">
+<p>Road Traffic Forecasts 2018, Department for Transport&#160;<a class="footnote-backref" href="#fnref:3" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:4">
+<p>UK aviation forecasts 2017, Department for Transport&#160;<a class="footnote-backref" href="#fnref:4" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.b78d2936.min.js"></script>
+      
+        <script src="javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
