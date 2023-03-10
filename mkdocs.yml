@@ -1,4 +1,5 @@
 site_name: TMfS18 Trip End Model
+repo_url: https://github.com/TransportScotland/tmfs18-trip-end-model
 
 # This should be set to true (which is the default) for remote verisons, but
 # when developing locally you may want to uncomment this line:
@@ -8,6 +9,7 @@ theme:
   name: material
   icon:
     logo: material/clipboard-text
+    repo: fontawesome/brands/github-alt
 
 markdown_extensions:
   - abbr
