@@ -52,15 +52,5 @@ Options that have not been discussed in the previous sections include:
 
 - Export/Import Settings - allows the user to save and load all
   settings in the GUI;
-- Integrate Home Working - if selected, the population data and trip
-  rate data will be expected with the WAH/WBC split discussed in the
-  "TELMoS Planning Data" section. Checked on by default;
-- Use Old Trip Rate Format - Can be selected to use the previous
-  format of production trip rates (separate files for each
-  segmentation containing a matrix of trip rates by household/person
-  type). Unchecked by default;
-- RTF/PTF/Airport Factors File - Alternative location for factor
-  files. If blank, will use the default versions in the 'Factors'
-  folder; and
 - Check for Newer Releases - opens the GitHub repository for the Trip
   End Model.

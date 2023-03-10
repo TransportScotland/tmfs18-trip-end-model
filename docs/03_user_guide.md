@@ -7,10 +7,16 @@ the relevant model directory structures.
 
 ## Input Data and Directory Structure
 
+To generate new demands for use in TMfS, three distinct folders structures are 
+required. The first is used to store the TMfS demands themselves and the second 
+to store the files as provided from TELMoS. These, respectively, are referred 
+to as `tmfs_root` and `delta_root` in this guide. The third folder is used to 
+store the Factors files used by the trip-end model.
+
+### `tmfs_root`
 The Trip End Model files are located within various folders under a main
-TMfS model directory - referred to as `tmfs_root`. The PC will also
-need to have the relevant Cube software files installed. These are
-consistent with the files used to run the TMfS model.
+TMfS model directory. The PC will also need to have the correct version of Cube 
+installed - this should be the same version used to run TMfS itself.
 
 As the Trip End Model is an incremental model, it needs to pivot from
 the existing run of the base year model and/or a previous forecast year
@@ -25,6 +31,7 @@ directory:
 
 where `base_year` for 2018 would be "18".
 
+### `delta_root`
 The Trip End Model uses various planning data and goods vehicle data
 output from the TELMoS model. For each modelled year, three files are
 required, including:
@@ -42,9 +49,11 @@ created in `delta_root`, named using the relevant TELMoS scenario code
 (`tel_scenario`). The three files should be saved in the folder 
 `{delta_root}\{tel_scenario}`.
 
+### Factors
 The remaining input data is contained within the "Factors" directory.
 The files in this folder contain the trip rates and attraction factors
-described previously. A full list of all input files is described below.
+described previously. By default, this is assumed to be contained within 
+`tmfs_root`, i.e. `{tmfs_root}\Factors`.
 
 ## Setting up the Model Run
 
@@ -53,10 +62,11 @@ forecast year, a new folder should be created in
 `{tmfs_root}\Runs\{tel_year}\{tel_scenario}`. Within this folder, a
 further folder named "Demand" should also be created.
 
+### Required Inputs
 Now the directory structure is complete the model executable can be run.
 This can be undertaken either using the executable GUI or through the
-command line - via a batch file or other method. The executable takes
-eight arguments, as follows:
+command line - via a batch file or other method. The executable has 
+eight required arguments, as follows:
 
 - Delta Root - path for the DELTA files;
 - TMfS Root - path for the executable;
@@ -70,6 +80,21 @@ eight arguments, as follows:
 - Base Year TELMoS Scenario Code - the planning data used to create
   the base scenario
 
+### Optional Inputs
+In addition to the required inputs, there are a series of optional inputs which
+may need to be filled in depending on the scenario you are running. 
+
+- Integrate Home Working - if selected, the population data and trip rate data 
+  will be expected with the WAH/WBC split discussed in the 
+  ["TELMoS Planning Data" section](./02_methodology.md#telmos-planning-data). Checked on by default;
+- Use Old Trip Rate Format - Can be selected to use the previous format of 
+  production trip rates (separate files for each segmentation containing a 
+  matrix of trip rates by household/person type). Unchecked by default; and
+- Trip Rate File/RTF/PTF/Airport Factors File - Alternative location for factor 
+  files. If blank, this assumes the files can be found in `{tmfs_root}\Factors`
+  with their default names.
+
+### Running the Trip-End Model
 Once the arguments have been entered, the model can be run. A model
 run should typically take less than 5 minutes to complete for one
 scenario.
