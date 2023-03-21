@@ -86,7 +86,7 @@ Note that the walk and cycle modes are not included within the TMfS18 Trip End M
 Production trip rates for these 88 categories are obtained from the NTEM
 using the input databases to the `CTRIPEND` software[^1]. The `IBETAhsr`
 table was used to provide the weekly trip rates by purpose, traveller
-type and area type. The table `IRHOmdshr` was used to split these trip
+type and area type. The table `IRHOmdhsr` was used to split these trip
 rates by time period and mode.
 
 Note that for the purposes of TMfS18, and TMfS14, each zone is assigned
@@ -110,23 +110,23 @@ The car driver and car passenger rates are combined to produce car
 person trip rates. Similarly, bus and rail trip rates are combined to
 produce general public transport trip rates.
 
-### Trip Rate Calculation
+??? example "Example trip rate calculation"
 
-The relevant calculations applied for the trip rate for 
-_AM Peak Car, for a Male in Full time Work, from a 3 adults with 2+ car household_
-are illustrated below as an example of how these trip rates were
-calculated from the databases.
+    The relevant calculations applied for the trip rate for 
+    _AM Peak Car, for a Male in Full time Work, from a 3 adults with 2+ car household_
+    are illustrated below as an example of how these trip rates were
+    calculated from the databases.
 
-- The weekly trip rate for a Male in Full time Work from a 3 adults with
-  2+ car household (all modes, all week) is 4.081137 (from `IBETAshr`)
-- The relevant mode splits for an (AM) Car Driver and an (AM) Car
-  Passenger are 0.541076 and 0.042546, respectively (from `IRHOmdhsr`).
-- This creates a weekly AM car trip rate of $4.081137 * (0.541076 + 0.042546) = 2.38184$
-- A similar calculation is carried out for the PT trip rates using the
-  bus and rail splits from `IRHOmdshr`.
+    - The weekly trip rate for a Male in Full time Work from a 3 adults with
+      2+ car household (all modes, all week) is 4.081137 (from `IBETAhsr`)
+    - The relevant mode splits for an (AM) Car Driver and an (AM) Car
+      Passenger are 0.541076 and 0.042546, respectively (from `IRHOmdhsr`).
+    - This creates a weekly AM car trip rate of $4.081137 * (0.541076 + 0.042546) = 2.38184$
+    - A similar calculation is carried out for the PT trip rates using the
+      bus and rail splits from `IRHOmdhsr`.
 
-For the WAH/WBC segmentation, the same operation is carried out for each
-segment using the relevant trip rates.
+    For the WAH/WBC segmentation, the same operation is carried out for each
+    segment using the relevant trip rates.
 
 ### TELMoS Planning Data
 

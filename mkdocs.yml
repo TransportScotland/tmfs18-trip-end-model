@@ -13,9 +13,11 @@ theme:
 
 markdown_extensions:
   - abbr
+  - admonition
   - footnotes
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.details
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.snippets

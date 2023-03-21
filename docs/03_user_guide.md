@@ -280,10 +280,8 @@ patterns for these files are:
 
 - `*.gcm`
 - `*sov*.mat`
-- `*add_h*.mat`
 - `*.msp`
 - `parking_charge.mat`
-- `AM_*z_00.prp`
 
 ### Checking the demand folder
 Following each of these steps, the demand folder should contain 76 files in total.
