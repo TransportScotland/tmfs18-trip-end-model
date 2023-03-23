@@ -300,13 +300,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#trip-rate-calculation" class="md-nav__link">
-    Trip Rate Calculation
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#telmos-planning-data" class="md-nav__link">
     TELMoS Planning Data
   </a>
@@ -529,13 +522,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#trip-rate-calculation" class="md-nav__link">
-    Trip Rate Calculation
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#telmos-planning-data" class="md-nav__link">
     TELMoS Planning Data
   </a>
@@ -752,7 +738,7 @@ types and eight household types generating 88 categories in total.</p>
 <p>Production trip rates for these 88 categories are obtained from the NTEM
 using the input databases to the <code>CTRIPEND</code> software<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. The <code>IBETAhsr</code>
 table was used to provide the weekly trip rates by purpose, traveller
-type and area type. The table <code>IRHOmdshr</code> was used to split these trip
+type and area type. The table <code>IRHOmdhsr</code> was used to split these trip
 rates by time period and mode.</p>
 <p>Note that for the purposes of TMfS18, and TMfS14, each zone is assigned
 a relevant NTEM "Area Type" in the <code>AreaCorrespondence.csv</code> input file.
@@ -771,22 +757,37 @@ standard trip rates and the WAH/WBC split trip rates, respectively.</p>
 <p>The car driver and car passenger rates are combined to produce car
 person trip rates. Similarly, bus and rail trip rates are combined to
 produce general public transport trip rates.</p>
-<h3 id="trip-rate-calculation">Trip Rate Calculation<a class="headerlink" href="#trip-rate-calculation" title="Permanent link">&para;</a></h3>
+<details class="example">
+<summary>Example trip rate calculation</summary>
 <p>The relevant calculations applied for the trip rate for 
 <em>AM Peak Car, for a Male in Full time Work, from a 3 adults with 2+ car household</em>
 are illustrated below as an example of how these trip rates were
 calculated from the databases.</p>
 <ul>
 <li>The weekly trip rate for a Male in Full time Work from a 3 adults with
-  2+ car household (all modes, all week) is 4.081137 (from <code>IBETAshr</code>)</li>
+  2+ car household (all modes, all week) is 4.081137 (from <code>IBETAhsr</code>)</li>
 <li>The relevant mode splits for an (AM) Car Driver and an (AM) Car
   Passenger are 0.541076 and 0.042546, respectively (from <code>IRHOmdhsr</code>).</li>
 <li>This creates a weekly AM car trip rate of <span class="arithmatex">\(4.081137 * (0.541076 + 0.042546) = 2.38184\)</span></li>
 <li>A similar calculation is carried out for the PT trip rates using the
-  bus and rail splits from <code>IRHOmdshr</code>.</li>
+  bus and rail splits from <code>IRHOmdhsr</code>.</li>
 </ul>
 <p>For the WAH/WBC segmentation, the same operation is carried out for each
 segment using the relevant trip rates.</p>
+</details>
+<details class="note">
+<summary>Alternative trip rate forecasts</summary>
+<p>At the time of writing (March 2023), Transport Scotland is considering 
+potential alternative forecast scenarios. Should alternative trip rates be
+required, these should still be generated with the same level of 
+granularity. </p>
+<p>In particular, the DfT Trip Rate Forecasting Tool can produce output trip 
+rates in line with NTEM classifications, effectively creating a new 
+<code>IBETAhsr</code> table. Differences between these forecasts and the standard NTEM
+outputs will need to be considered when using these values as part of 
+calculations, and it may instead be advisable to use outputs solely to 
+inform changes over time (rather than as standalone trip rates).</p>
+</details>
 <h3 id="telmos-planning-data">TELMoS Planning Data<a class="headerlink" href="#telmos-planning-data" title="Permanent link">&para;</a></h3>
 <p>To enable forecasting, the Trip End Model requires various planning data
 which describes how the number of households, population and employment
