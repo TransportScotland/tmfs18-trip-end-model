@@ -128,6 +128,22 @@ produce general public transport trip rates.
     For the WAH/WBC segmentation, the same operation is carried out for each
     segment using the relevant trip rates.
 
+
+??? note "Alternative trip rate forecasts"
+
+    At the time of writing (March 2023), Transport Scotland is considering 
+    potential alternative forecast scenarios. Should alternative trip rates be
+    required, these should still be generated with the same level of 
+    granularity. 
+    
+    In particular, the DfT Trip Rate Forecasting Tool can produce output trip 
+    rates in line with NTEM classifications, effectively creating a new 
+    `IBETAhsr` table. Differences between these forecasts and the standard NTEM
+    outputs will need to be considered when using these values as part of 
+    calculations, and it may instead be advisable to use outputs solely to 
+    inform changes over time (rather than as standalone trip rates).
+
+
 ### TELMoS Planning Data
 
 To enable forecasting, the Trip End Model requires various planning data
